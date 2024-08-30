@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import './utility/index';
+
+@layer base {
+  html {
+    height: 100vh;
+    width: 100vw;
+    overflow-x: hidden;
+    @apply font-manrope;
+  }
+}

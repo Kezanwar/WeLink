@@ -1,0 +1,54 @@
+// breakpoints
+
+$breakpoint-desktop-lg: 1600px;
+$breakpoint-desktop-sml: 1200px;
+$breakpoint-tablet-lg: 1024px;
+$breakpoint-tablet-sml: 768px;
+$breakpoint-phone-lg: 530px;
+$breakpoint-phone-sml: 400px;
+
+// ------ mixins
+
+@mixin for-sml-phone {
+  @media (max-width: $breakpoint-phone-sml) {
+    @content;
+  }
+}
+@mixin for-lg-phone {
+  @media (max-width: $breakpoint-phone-lg) {
+    @content;
+  }
+}
+@mixin for-sml-tablet {
+  @media (max-width: $breakpoint-tablet-sml) {
+    @content;
+  }
+}
+@mixin for-lg-tablet {
+  @media (max-width: $breakpoint-tablet-lg) {
+    @content;
+  }
+}
+@mixin for-sml-desktop {
+  @media (max-width: $breakpoint-desktop-sml) {
+    @content;
+  }
+}
+@mixin for-lg-desktop-down {
+  @media (max-width: $breakpoint-desktop-lg) {
+    @content;
+  }
+}
+@mixin for-lg-desktop-up {
+  @media (min-width: $breakpoint-desktop-lg) {
+    @content;
+  }
+}
+
+.is-container {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+
+  @apply px-6  2xl:max-w-[1530px];
+}
