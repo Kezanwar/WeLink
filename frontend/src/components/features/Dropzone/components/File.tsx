@@ -1,0 +1,111 @@
+import { FC, useMemo } from 'react';
+import { IconBaseProps } from 'react-icons';
+import {
+  BsFiletypeMov,
+  BsFiletypeMp4,
+  BsFiletypeGif,
+  BsFiletypeCss,
+  BsFiletypePdf,
+  BsFiletypeDoc,
+  BsFiletypeDocx,
+  BsFiletypeXls,
+  BsFiletypeXlsx,
+  BsFiletypePpt,
+  BsFiletypePptx,
+  BsFiletypeTxt,
+  BsFiletypeJpg,
+  BsFiletypePng,
+  BsFiletypeSvg,
+  BsFiletypeMp3,
+  BsFiletypeWav,
+  BsFileEarmarkZip,
+  BsFiletypeHtml,
+  BsFiletypeJs,
+  BsFiletypeJson,
+  BsFiletypeJsx,
+  BsFiletypeTsx,
+  BsFiletypeXml,
+  BsFileBinary,
+  BsFileEarmarkText,
+  BsFileEarmarkEasel
+} from 'react-icons/bs';
+
+import ProgressBar from '@app/components/progress-bar';
+import useFileStore from '@app/stores/file';
+import cc from '@app/util/cc';
+import formatBytes from '@app/util/bytes';
+
+const fileTypeIcons = {
+  pdf: <BsFiletypePdf size={40} className="text-red-700 mb-3" />,
+  doc: <BsFiletypeDoc size={40} className="text-blue-600 mb-3" />,
+  docx: <BsFiletypeDocx size={40} className="text-blue-600 mb-3" />,
+  xls: <BsFiletypeXls size={40} className="text-green-500 mb-3" />,
+  xlsx: <BsFiletypeXlsx size={40} className="text-green-500 mb-3" />,
+  ppt: <BsFiletypePpt size={40} className="text-red-700 mb-3" />,
+  pptx: <BsFiletypePptx size={40} className="text-red-700 mb-3" />,
+  txt: <BsFiletypeTxt size={40} className="text-orange-600 mb-3" />,
+  jpg: <BsFiletypeJpg size={40} className="text-orange-600 mb-3" />,
+  jpeg: <BsFiletypeJpg size={40} className="text-orange-600 mb-3" />,
+  png: <BsFiletypePng size={40} className="text-orange-600 mb-3" />,
+  webp: <BsFileEarmarkEasel size={40} className="text-orange-600 mb-3" />,
+  svg: <BsFiletypeSvg size={40} className="text-orange-600 mb-3" />,
+  gif: <BsFiletypeGif size={40} className="text-orange-600 mb-3" />,
+  mp3: <BsFiletypeMp3 size={40} className="text-orange-500 mb-3" />,
+  wav: <BsFiletypeWav size={40} className="text-orange-500 mb-3" />,
+  mp4: <BsFiletypeMp4 size={40} className="text-green-400 mb-3" />,
+  mov: <BsFiletypeMov size={40} className="text-green-400 mb-3" />,
+  zip: <BsFileEarmarkZip size={40} className="text-sky-500 mb-3" />,
+  rar: <BsFileEarmarkZip size={40} className="text-sky-500 mb-3" />,
+  html: <BsFiletypeHtml size={40} className="text-orange-400 mb-3" />,
+  css: <BsFiletypeCss size={40} className="text-sky-500 mb-3" />,
+  js: <BsFiletypeJs size={40} className="text-yellow-400 mb-3" />,
+  ts: <BsFiletypeTsx size={40} className="text-blue-600 mb-3" />,
+  tsx: <BsFiletypeTsx size={40} className="text-blue-600 mb-3" />,
+  jsx: <BsFiletypeJsx size={40} className="text-sky-600 mb-3" />,
+  json: <BsFiletypeJson size={40} className="text-amber-500 mb-3" />,
+  xml: <BsFiletypeXml size={40} className="text-green-400 mb-3" />,
+  bin: <BsFileBinary size={40} className="text-amber-800 mb-3" />,
+  // Default icon for unknown file types
+  default: <BsFileEarmarkText size={40} className="text-pink-400 mb-3" />
+};
+
+type Extension = keyof typeof fileTypeIcons;
+
+type IconProps = IconBaseProps & {
+  ext: Extension;
+};
+
+const FileIcon: FC<IconProps> = ({ ext }) => {
+  const Icon = fileTypeIcons[ext] || fileTypeIcons['default'];
+  return Icon;
+};
+
+const File = () => {
+  const { file, isUploading, uploadingProgress } = useFileStore();
+
+  const ext: Extension = useMemo(() => {
+    const txtArr = file?.name.split('.');
+
+    return txtArr?.[txtArr.length - 1].toLowerCase() as Extension;
+  }, [file]);
+
+  return file ? (
+    <>
+      <div
+        className={cc([
+          'h-full w-full flex flex-col items-center justify-center ',
+          isUploading && 'opacity-50'
+        ])}
+      >
+        <FileIcon ext={ext} />
+        <p className="text-lg text-black mb-2 dark:text-white">{file?.name}</p>
+        <p className="text-sm text-gray-400">{formatBytes(file?.size)}</p>
+      </div>
+      <div className="h-[40px]">
+        {isUploading && <ProgressBar progress={uploadingProgress} />}
+      </div>
+    </>
+  ) : null;
+};
+
+export default File;

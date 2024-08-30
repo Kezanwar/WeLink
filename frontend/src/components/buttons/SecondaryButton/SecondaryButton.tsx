@@ -1,4 +1,4 @@
-import React, { FC, ReactElement, ReactNode } from 'react';
+import React, { FC, ReactNode } from 'react';
 
 type Props = React.HTMLProps<HTMLButtonElement> & {
   text: string;
@@ -9,7 +9,7 @@ const SecondaryButton: FC<Props> = ({ onClick, text, icon, className }) => {
   return (
     <button
       onClick={onClick}
-      className={`hover:scale-105 active:scale-90 text-sm transition-transform flex gap-1  rounded-full items-center  ${className}`}
+      className={`hover:scale-105 active:scale-90 font-semibold text-sm transition-transform flex gap-1  rounded-full items-center  ${className}`}
     >
       {text} {icon && icon}
     </button>

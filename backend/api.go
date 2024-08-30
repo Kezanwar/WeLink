@@ -69,7 +69,7 @@ func (s *APIServer) serve() error {
 	router.Use(loggingMiddleware)
 	router.Use(makeAuthMiddleware())
 
-	log.Println("img-link api running on port", s.listenAddr)
+	log.Println("WeLink api running on port", s.listenAddr)
 
 	http.ListenAndServe(s.listenAddr, router)
 
