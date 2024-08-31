@@ -46,6 +46,7 @@ const Dropzone: FC = () => {
   };
 
   const handleGetLink = () => {
+    console.log(file);
     enqueueMessage({ text: 'test', type: 'success' });
     setShowModal(true);
   };
@@ -74,7 +75,7 @@ const Dropzone: FC = () => {
       >
         {!file ? <Upload over={state.over} /> : <File />}
       </button>
-      {uploadSuccess && (
+      {uploadSuccess && file && (
         <div className="flex items-center gap-8">
           <SecondaryButton
             onClick={abort}
