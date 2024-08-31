@@ -11,6 +11,7 @@ import File from './components/File';
 import cc from '@app/util/cc';
 import PrimaryButton from '@app/components/buttons/PrimaryButton';
 import Upload from './components/Upload';
+import Request from '@app/services/request';
 
 const Dropzone: FC = () => {
   const { file, isUploading, uploadSuccess } = useFileStore();

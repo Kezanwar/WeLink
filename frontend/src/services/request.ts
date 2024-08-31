@@ -1,8 +1,10 @@
 import axios, { AxiosError, AxiosInstance, AxiosProgressEvent } from 'axios';
 
-type OnUploadProgress = (progress: AxiosProgressEvent) => void;
+type OnProgress = (progress: AxiosProgressEvent) => void;
 
 class Request {
+  static BASE_URL: string = import.meta.env.VITE_BASE_URL;
+
   static axios: AxiosInstance;
 
   static init() {
@@ -22,22 +24,21 @@ class Request {
 
   static getFormDataFromFile = (file: File) => {
     const formData = new FormData();
-    Object.entries(file).forEach(([key, item]) => {
-      formData.append(key, item);
-    });
+    formData.append('name', file.name);
+    formData.append('size', `${file.size}`);
+    formData.append('type', file.type);
+    formData.append('file', file);
     return formData;
   };
 
-  static BASE_URL: string = import.meta.env.VITE_BASE_URL || 'no-baseurl-found';
-
-  static postFile(file: File, onProgress: OnUploadProgress) {
+  static postFile(file: File, onProgress: OnProgress) {
     const formData = this.getFormDataFromFile(file);
-    return this.axios.post(`${this.BASE_URL}/upload`, formData, {
+    return this.axios.post(`${this.BASE_URL}/`, formData, {
       onUploadProgress: onProgress
     });
   }
 
-  static getFileBinary(uuid: string, onProgress: OnUploadProgress) {
+  static getFileBinary(uuid: string, onProgress: OnProgress) {
     return this.axios.get(`${this.BASE_URL}/file/${uuid}`, {
       onDownloadProgress: onProgress
     });
