@@ -5,6 +5,9 @@ import { Header } from '@app/components/features/Header';
 // routes
 import Router from '@app/routes/routes';
 import Toast from './components/features/Toast';
+import Request from './services/request';
+
+Request.init();
 
 function App() {
   return (
