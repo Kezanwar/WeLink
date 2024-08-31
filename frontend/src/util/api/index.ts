@@ -1,4 +1,7 @@
-import { ErrorObject } from '../../types/error';
+export type ErrorObject = {
+  message: string;
+  statusCode: number;
+};
 
 export type FetchErrorHandlerOptions = {
   error: unknown;
@@ -13,7 +16,6 @@ export const fetchErrorHandler = (
   const { error, onError } = errorHandlerOptions;
   const apiErr = error as ErrorObject;
 
-  console.log(error);
   if (typeof error === 'string') {
     onError({ message: error || genericErrMsg, statusCode: 500 });
   } else if (apiErr?.message && apiErr?.statusCode) {
