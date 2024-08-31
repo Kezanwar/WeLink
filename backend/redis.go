@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"unsafe"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -36,8 +37,10 @@ func (r *RedisClient) connect() error {
 	return nil
 }
 
-func (r *RedisClient) set_image(key string, image string) error {
-	err := r.rdb.Set(ctx, key, image, 0).Err()
+func (r *RedisClient) set_file(key string, file []byte) error {
+	var str_file = r.binary_to_binstring(file)
+
+	err := r.rdb.Set(ctx, key, str_file, 0).Err()
 
 	if err != nil {
 		return err
@@ -46,12 +49,16 @@ func (r *RedisClient) set_image(key string, image string) error {
 	return nil
 }
 
-func (r *RedisClient) get_image(key string) (string, error) {
-	image, err := r.rdb.Get(ctx, key).Result()
+func (r *RedisClient) get_file(key string) ([]byte, error) {
+	file, err := r.rdb.Get(ctx, key).Bytes()
 
 	if err == redis.Nil {
-		return "", fmt.Errorf("image not found")
+		return nil, fmt.Errorf("file not found")
 	}
 
-	return image, nil
+	return file, nil
+}
+
+func (r *RedisClient) binary_to_binstring(bs []byte) string {
+	return unsafe.String(unsafe.SliceData(bs), len(bs))
 }

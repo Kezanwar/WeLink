@@ -15,7 +15,7 @@ type APIServer struct {
 	listenAddr string
 }
 
-type ApiHandler func(http.ResponseWriter, *http.Request) (error, int)
+type ApiHandler func(http.ResponseWriter, *http.Request) (int, error)
 
 type ApiError struct {
 	Message string `json:"message"`
@@ -41,16 +41,12 @@ var Api = &APIServer{
 
 func (s *APIServer) makeHTTPHandler(f ApiHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err, code := f(w, r)
+		code, err := f(w, r)
 
 		if err != nil {
 			s.writeJson(w, code, ApiError{Message: err.Error()})
 		}
 
-		// if err := f(w, r); err != nil {
-		// 	// handle the error
-		// 	writeJson(w, http.StatusBadRequest, ApiError{Message: err.Error()})
-		// }
 	}
 }
 
@@ -63,8 +59,9 @@ func (s *APIServer) writeJson(w http.ResponseWriter, status int, v any) error {
 func (s *APIServer) serve() error {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/image/{uuid}", s.makeHTTPHandler(s.handleGetImage))
-	router.HandleFunc("/api/upload", s.makeHTTPHandler(s.handlePostImage))
+	router.HandleFunc("/api/file/{uuid}", s.makeHTTPHandler(s.handleGetFile))
+	router.HandleFunc("/api/files/meta", s.makeHTTPHandler(s.handleGetFile))
+	router.HandleFunc("/api/upload", s.makeHTTPHandler(s.handlePostFile))
 
 	router.Use(loggingMiddleware)
 	router.Use(makeAuthMiddleware())
@@ -76,31 +73,31 @@ func (s *APIServer) serve() error {
 	return nil
 }
 
-func (s *APIServer) handleGetImage(w http.ResponseWriter, r *http.Request) (error, int) {
+func (s *APIServer) handleGetFile(w http.ResponseWriter, r *http.Request) (int, error) {
 
 	fmt.Println("runs")
 	if r.Method == "GET" {
 		uuid, err := s.getUUID(r)
 
 		if err != nil {
-			return err, http.StatusBadRequest
+			return http.StatusBadRequest, err
 		}
 
-		image, imgErr := Redis.get_image(uuid)
+		_, imgErr := Redis.get_file(uuid)
 
 		if imgErr != nil {
-			return imgErr, http.StatusNotFound
+			return http.StatusNotFound, imgErr
 		}
 
-		return s.writeJson(w, http.StatusOK, &ImageSuccessResponse{
-			Image: image,
-		}), 0
+		return 0, s.writeJson(w, http.StatusOK, &ImageSuccessResponse{
+			Image: "success",
+		})
 	} else {
-		return fmt.Errorf("method not allow %s", r.Method), http.StatusBadRequest
+		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
 }
 
-func (s *APIServer) handlePostImage(w http.ResponseWriter, r *http.Request) (error, int) {
+func (s *APIServer) handlePostFile(w http.ResponseWriter, r *http.Request) (int, error) {
 
 	if r.Method == "POST" {
 
@@ -122,11 +119,11 @@ func (s *APIServer) handlePostImage(w http.ResponseWriter, r *http.Request) (err
 		// 	return err, http.StatusBadRequest
 		// }
 
-		return s.writeJson(w, http.StatusOK, &EmptySuccessResponse{
+		return 0, s.writeJson(w, http.StatusOK, &EmptySuccessResponse{
 			Message: uuid,
-		}), 0
+		})
 	} else {
-		return fmt.Errorf("method not allow %s", r.Method), http.StatusBadRequest
+		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
 
 }
