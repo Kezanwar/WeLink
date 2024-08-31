@@ -7,7 +7,7 @@ const Logo: React.FC = () => {
   return (
     <Link to={PATH_HOME}>
       <div></div>
-      <h1 className="Logo text-4xl hover:underline   tracking-tighter font-extrabold dark:text-white">
+      <h1 className="Logo text-4xl    tracking-tighter font-extrabold dark:text-white">
         We
         <span className=" text-amber-500 ">L</span>
         <span className=" text-indigo-400  ">i</span>

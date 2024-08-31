@@ -7,7 +7,7 @@ const Toast: FC = () => {
   return (
     <div>
       {messages.map((msg) => (
-        <div>{msg.text}</div>
+        <div key={msg.uuid}>{msg.text}</div>
       ))}
     </div>
   );
