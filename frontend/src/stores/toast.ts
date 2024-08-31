@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { v4 } from 'uuid';
 
 type Message = {
@@ -18,37 +17,30 @@ interface ToastStore {
   enqueueMessage: (msg: Message) => void;
 }
 
-const useToastStore = create<ToastStore>()(
-  persist(
-    (set, get) => ({
-      messages: [],
-      enqueueMessage: (msg: Message) => {
-        const uuid = v4();
-        get().add(msg, uuid);
-        setTimeout(() => {
-          get().remove(uuid);
-        }, 3000);
-      },
-      add: (msg: Message, uuid: string) =>
-        set((state) => {
-          if (state.messages.find((msg) => msg.text === msg.text)) {
-            return state;
-          } else {
-            const newMsg: MessageInternal = { ...msg, uuid };
-            return { messages: [...state.messages, newMsg] };
-          }
-        }),
-      remove: (uuid: string) =>
-        set((state) => {
-          return {
-            messages: state.messages.filter((message) => message.uuid !== uuid)
-          };
-        })
+const useToastStore = create<ToastStore>()((set, get) => ({
+  messages: [],
+  enqueueMessage: (msg: Message) => {
+    const uuid = v4();
+    get().add(msg, uuid);
+    setTimeout(() => {
+      get().remove(uuid);
+    }, 3000);
+  },
+  add: (msg: Message, uuid: string) =>
+    set((state) => {
+      if (state.messages.find((msg) => msg.text === msg.text)) {
+        return state;
+      } else {
+        const newMsg: MessageInternal = { ...msg, uuid };
+        return { messages: [...state.messages, newMsg] };
+      }
     }),
-    {
-      name: 'toast'
-    }
-  )
-);
+  remove: (uuid: string) =>
+    set((state) => {
+      return {
+        messages: state.messages.filter((message) => message.uuid !== uuid)
+      };
+    })
+}));
 
 export default useToastStore;
