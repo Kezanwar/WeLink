@@ -39,12 +39,12 @@ var Api = &APIServer{
 	listenAddr: PORT,
 }
 
-func makeHTTPHandler(f ApiHandler) http.HandlerFunc {
+func (s *APIServer) makeHTTPHandler(f ApiHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err, code := f(w, r)
 
 		if err != nil {
-			writeJson(w, code, ApiError{Message: err.Error()})
+			s.writeJson(w, code, ApiError{Message: err.Error()})
 		}
 
 		// if err := f(w, r); err != nil {
@@ -54,7 +54,7 @@ func makeHTTPHandler(f ApiHandler) http.HandlerFunc {
 	}
 }
 
-func writeJson(w http.ResponseWriter, status int, v any) error {
+func (s *APIServer) writeJson(w http.ResponseWriter, status int, v any) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
@@ -63,8 +63,8 @@ func writeJson(w http.ResponseWriter, status int, v any) error {
 func (s *APIServer) serve() error {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/image/{uuid}", makeHTTPHandler(s.handleGetImage))
-	router.HandleFunc("/api/upload", makeHTTPHandler(s.handlePostImage))
+	router.HandleFunc("/api/image/{uuid}", s.makeHTTPHandler(s.handleGetImage))
+	router.HandleFunc("/api/upload", s.makeHTTPHandler(s.handlePostImage))
 
 	router.Use(loggingMiddleware)
 	router.Use(makeAuthMiddleware())
@@ -92,7 +92,7 @@ func (s *APIServer) handleGetImage(w http.ResponseWriter, r *http.Request) (erro
 			return imgErr, http.StatusNotFound
 		}
 
-		return writeJson(w, http.StatusOK, &ImageSuccessResponse{
+		return s.writeJson(w, http.StatusOK, &ImageSuccessResponse{
 			Image: image,
 		}), 0
 	} else {
@@ -122,7 +122,7 @@ func (s *APIServer) handlePostImage(w http.ResponseWriter, r *http.Request) (err
 		// 	return err, http.StatusBadRequest
 		// }
 
-		return writeJson(w, http.StatusOK, &EmptySuccessResponse{
+		return s.writeJson(w, http.StatusOK, &EmptySuccessResponse{
 			Message: uuid,
 		}), 0
 	} else {
@@ -138,12 +138,11 @@ func (s *APIServer) getUUID(r *http.Request) (string, error) {
 		return "", fmt.Errorf("no ID given")
 	}
 
-	// uuid, err := strconv.Atoi(idStr)
+	match := Utility.validate_uuid(uuidStr)
 
-	// // if ID cant cast to an int
-	// if err != nil {
-	// 	return 0, fmt.Errorf("invalid ID given: %s", idStr)
-	// }
+	if !match {
+		return "", fmt.Errorf("not a valid uuid")
+	}
 
 	return uuidStr, nil
 }
