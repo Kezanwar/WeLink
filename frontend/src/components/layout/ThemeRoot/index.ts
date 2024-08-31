@@ -1,3 +1,3 @@
 import ThemeRoot from './ThemeRoot';
 
-export { ThemeRoot }
+export default ThemeRoot;

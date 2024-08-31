@@ -20,22 +20,31 @@ class Request {
     );
   }
 
+  static getFormDataFromFile = (file: File) => {
+    const formData = new FormData();
+    Object.entries(file).forEach(([key, item]) => {
+      formData.append(key, item);
+    });
+    return formData;
+  };
+
   static BASE_URL: string = import.meta.env.VITE_BASE_URL || 'no-baseurl-found';
 
-  static postFileBinary(data: FormData, onProgress: OnUploadProgress) {
-    this.axios.post(`${this.BASE_URL}/upload`, data, {
+  static postFile(file: File, onProgress: OnUploadProgress) {
+    const formData = this.getFormDataFromFile(file);
+    return this.axios.post(`${this.BASE_URL}/upload`, formData, {
       onUploadProgress: onProgress
     });
   }
 
   static getFileBinary(uuid: string, onProgress: OnUploadProgress) {
-    this.axios.get(`${this.BASE_URL}/file/${uuid}`, {
+    return this.axios.get(`${this.BASE_URL}/file/${uuid}`, {
       onDownloadProgress: onProgress
     });
   }
 
   static getFilesMeta(uuids: string[]) {
-    this.axios.get(`${this.BASE_URL}/files/meta`, { params: { uuids } });
+    return this.axios.get(`${this.BASE_URL}/files/meta`, { params: { uuids } });
   }
 }
 
