@@ -33,20 +33,20 @@ class Request {
 
   static postFile(file: File, onProgress: OnProgress) {
     const formData = this.getFormDataFromFile(file);
-    return this.axios.post(`${this.BASE_URL}/`, formData, {
+    return this.axios.post('/upload', formData, {
       onUploadProgress: onProgress,
       headers: { 'Content-Type': 'multipart/form-data' }
     });
   }
 
   static getFileBinary(uuid: string, onProgress: OnProgress) {
-    return this.axios.get(`${this.BASE_URL}/file/${uuid}`, {
+    return this.axios.get(`/file/${uuid}`, {
       onDownloadProgress: onProgress
     });
   }
 
   static getFilesMeta(uuids: string[]) {
-    return this.axios.get(`${this.BASE_URL}/files/meta`, { params: { uuids } });
+    return this.axios.get(`/files/meta`, { params: { uuids } });
   }
 }
 
