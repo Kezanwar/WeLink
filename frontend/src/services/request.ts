@@ -34,7 +34,8 @@ class Request {
   static postFile(file: File, onProgress: OnProgress) {
     const formData = this.getFormDataFromFile(file);
     return this.axios.post(`${this.BASE_URL}/`, formData, {
-      onUploadProgress: onProgress
+      onUploadProgress: onProgress,
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
   }
 
