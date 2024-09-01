@@ -19,7 +19,7 @@ const Upload: FC<Props> = ({ over }) => {
           !over ? 'scale-100 group-hover:scale-0' : 'scale-0'
         } transition-all`}
       >
-        Upload
+        Drop or Upload
       </p>
       <IoCloudUploadOutline
         className={`transition-all ${

@@ -12,3 +12,9 @@
     @apply font-manrope;
   }
 }
+
+@layer components {
+  .logo-gradient {
+    @apply bg-gradient-to-r from-[#9bd174] to-[#7fc0be]  bg-clip-text pr-1 text-transparent;
+  }
+}

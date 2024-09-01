@@ -1,7 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { BodyText } from '@app/components/typography/BodyText';
-import { TbLink } from 'react-icons/tb';
 import { Heading } from '@app/components/typography/Heading';
 import Dropzone from '@app/components/features/Dropzone';
 
@@ -12,11 +11,8 @@ const Home: React.FC = () => {
         <div className="__black-and-white flex flex-col items-center  text-center">
           <Heading variant="lg" className="mb-5">
             Upload a file and get a share-able{' '}
-            <span className="font-bold relative">
-              <span className=" text-amber-500 ">l</span>
-              <span className=" text-indigo-400  ">i</span>
-              <span className=" text-pink-400  ">n</span>
-              <span className="text-cyan-400">k</span>
+            <span className="font-bold relative logo-gradient text-transparent">
+              link
               <span className="text-gray-200">...</span>
             </span>
             {/* <div className="absolute right-[25%] translate-x-[10%] top-[-8px]">
