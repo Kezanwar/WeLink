@@ -105,6 +105,8 @@ func (s *APIServer) handlePostFile(w http.ResponseWriter, r *http.Request) (int,
 
 		uuid := Utility.create_uuid()
 
+		fmt.Println(Utility.validate_uuid(uuid))
+
 		// var ImageReq = &ImageUploadReq{}
 
 		// if err := json.NewDecoder(r.Body).Decode(ImageReq); err != nil {

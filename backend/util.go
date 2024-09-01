@@ -9,22 +9,9 @@ import (
 )
 
 type Util struct {
-	match_uuid *regexp.Regexp
 }
 
 var Utility = &Util{}
-
-func (u *Util) init() error {
-	test, err := regexp.Compile("/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i")
-
-	if err != nil {
-		return err
-	}
-
-	u.match_uuid = test
-
-	return nil
-}
 
 func (u *Util) print_map(m any) {
 	b, err := u.json_stringify(m)
@@ -47,6 +34,8 @@ func (u *Util) create_uuid() string {
 	return uuid.New().String()
 }
 
+var testUUID = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
+
 func (u *Util) validate_uuid(uuid string) bool {
-	return u.match_uuid.MatchString(uuid)
+	return testUUID.MatchString(uuid)
 }

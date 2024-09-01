@@ -12,12 +12,6 @@ func main() {
 		log.Fatal(redisErr)
 	}
 
-	utilErr := Utility.init()
-
-	if utilErr != nil {
-		log.Fatal(utilErr)
-	}
-
 	apiErr := Api.serve()
 
 	if apiErr != nil {
