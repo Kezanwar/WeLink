@@ -30,7 +30,7 @@ type ImageSuccessResponse struct {
 }
 
 type ImageUploadReq struct {
-	Image string
+	File []byte `json:"file"`
 }
 
 var PORT = string(":") + os.Getenv("PORT")
@@ -101,29 +101,39 @@ func (s *APIServer) handlePostFile(w http.ResponseWriter, r *http.Request) (int,
 
 	if r.Method == "POST" {
 
-		fmt.Println("runs")
+		err := r.ParseMultipartForm(TWO_GIG)
 
+		if err != nil {
+			return http.StatusBadRequest, fmt.Errorf("failed to parse multipart form")
+		}
+
+		file, handler, err := r.FormFile("file")
+
+		if err != nil {
+			return http.StatusBadRequest, fmt.Errorf("failed to parse multipart form")
+		}
+
+		defer file.Close()
+
+		bytes, err := File.make_buffer_from_file(file)
+
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+
+		name := handler.Filename
+		size := handler.Size
+		file_type := handler.Header.Get("Content-Type")
+		formatted_size := r.FormValue("size")
 		uuid := Utility.create_uuid()
 
-		fmt.Println(Utility.validate_uuid(uuid))
+		meta := File.make_file_meta(name, file_type, formatted_size, size, uuid)
 
-		// var ImageReq = &ImageUploadReq{}
+		binstring := Redis.binary_to_binstring(bytes)
 
-		// if err := json.NewDecoder(r.Body).Decode(ImageReq); err != nil {
-		// 	return err, http.StatusBadRequest
-		// }
+		fmt.Println(len(binstring))
 
-		// defer r.Body.Close()
-
-		// err := s.redis.SetImage(uuid, ImageReq.Image)
-
-		// if err != nil {
-		// 	return err, http.StatusBadRequest
-		// }
-
-		return 0, s.writeJson(w, http.StatusOK, &EmptySuccessResponse{
-			Message: uuid,
-		})
+		return 0, s.writeJson(w, http.StatusOK, meta)
 	} else {
 		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
@@ -145,3 +155,8 @@ func (s *APIServer) getUUID(r *http.Request) (string, error) {
 
 	return uuidStr, nil
 }
+
+//    s, err := ioutil.ReadAll(r.Body)
+//     if err != nil {
+//         panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
+//     }

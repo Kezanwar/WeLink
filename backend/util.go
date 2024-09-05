@@ -13,7 +13,7 @@ type Util struct {
 
 var Utility = &Util{}
 
-func (u *Util) print_map(m any) {
+func (u *Util) print_map(m *any) {
 	b, err := u.json_stringify(m)
 	if err != nil {
 		log.Fatal(err)
@@ -22,7 +22,7 @@ func (u *Util) print_map(m any) {
 
 }
 
-func (u *Util) json_stringify(m any) (string, error) {
+func (u *Util) json_stringify(m *any) (string, error) {
 	b, err := json.Marshal(m)
 	if err != nil {
 		return "", err
