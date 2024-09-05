@@ -58,6 +58,21 @@ func (s *APIServer) write_json(w http.ResponseWriter, status int, v any) error {
 	return json.NewEncoder(w).Encode(v)
 }
 
+func (s *APIServer) download_file(w http.ResponseWriter, file []byte, fileMeta *FileMeta) error {
+	// Set the appropriate content type - adjust as needed
+	w.Header().Set("Content-Type", fileMeta.Type)
+
+	// Set the content disposition header for downloading the file
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileMeta.Name))
+
+	// Write the []byte to the response
+	if _, err := w.Write(file); err != nil {
+		return fmt.Errorf("failed to download file")
+	}
+
+	return nil
+}
+
 func (s *APIServer) serve() error {
 	router := mux.NewRouter()
 
@@ -85,10 +100,10 @@ func (s *APIServer) handle_get_file(w http.ResponseWriter, r *http.Request) (int
 			return http.StatusBadRequest, err
 		}
 
-		_, imgErr := Redis.get_file(uuid)
+		_, fileErr := Redis.get_file(uuid)
 
-		if imgErr != nil {
-			return http.StatusNotFound, imgErr
+		if fileErr != nil {
+			return http.StatusNotFound, fileErr
 		}
 
 		return s.NilError, s.write_json(w, http.StatusOK, &ImageSuccessResponse{
