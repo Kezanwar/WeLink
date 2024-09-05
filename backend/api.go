@@ -41,18 +41,18 @@ var Api = &APIServer{
 	NilError:   0,
 }
 
-func (s *APIServer) makeHTTPHandler(f ApiHandler) http.HandlerFunc {
+func (s *APIServer) make_http_handler(f ApiHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		code, err := f(w, r)
 
 		if err != nil {
-			s.writeJson(w, code, ApiError{Message: err.Error()})
+			s.write_json(w, code, ApiError{Message: err.Error()})
 		}
 
 	}
 }
 
-func (s *APIServer) writeJson(w http.ResponseWriter, status int, v any) error {
+func (s *APIServer) write_json(w http.ResponseWriter, status int, v any) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
@@ -61,9 +61,9 @@ func (s *APIServer) writeJson(w http.ResponseWriter, status int, v any) error {
 func (s *APIServer) serve() error {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/file/{uuid}", s.makeHTTPHandler(s.handle_get_file))
-	router.HandleFunc("/api/files/meta", s.makeHTTPHandler(s.handle_get_file))
-	router.HandleFunc("/api/upload", s.makeHTTPHandler(s.handle_post_file))
+	router.HandleFunc("/api/file/{uuid}", s.make_http_handler(s.handle_get_file))
+	router.HandleFunc("/api/files/meta", s.make_http_handler(s.handle_get_file))
+	router.HandleFunc("/api/upload", s.make_http_handler(s.handle_post_file))
 
 	router.Use(loggingMiddleware)
 	router.Use(makeAuthMiddleware())
@@ -91,7 +91,7 @@ func (s *APIServer) handle_get_file(w http.ResponseWriter, r *http.Request) (int
 			return http.StatusNotFound, imgErr
 		}
 
-		return s.NilError, s.writeJson(w, http.StatusOK, &ImageSuccessResponse{
+		return s.NilError, s.write_json(w, http.StatusOK, &ImageSuccessResponse{
 			Image: "success",
 		})
 	} else {
@@ -102,7 +102,7 @@ func (s *APIServer) handle_get_file(w http.ResponseWriter, r *http.Request) (int
 func (s *APIServer) handle_post_file(w http.ResponseWriter, r *http.Request) (int, error) {
 
 	if r.Method == "POST" {
-
+		//get the multipart form data (max 2 gig file size)
 		err := r.ParseMultipartForm(TWO_GIG)
 
 		if err != nil {
@@ -112,7 +112,7 @@ func (s *APIServer) handle_post_file(w http.ResponseWriter, r *http.Request) (in
 		file, handler, err := r.FormFile("file")
 
 		if err != nil {
-			return http.StatusBadRequest, fmt.Errorf("failed to parse multipart form")
+			return http.StatusBadRequest, fmt.Errorf("failed to parse file")
 		}
 
 		defer file.Close()
@@ -120,7 +120,7 @@ func (s *APIServer) handle_post_file(w http.ResponseWriter, r *http.Request) (in
 		bytes, err := File.make_buffer_from_file(file)
 
 		if err != nil {
-			return http.StatusBadRequest, err
+			return http.StatusBadRequest, fmt.Errorf("failed to read file")
 		}
 
 		name := handler.Filename
@@ -133,9 +133,11 @@ func (s *APIServer) handle_post_file(w http.ResponseWriter, r *http.Request) (in
 
 		binstring := Redis.binary_to_binstring(bytes)
 
+		File.write_tmp_file(bytes, name)
+
 		fmt.Println(len(binstring))
 
-		return s.NilError, s.writeJson(w, http.StatusOK, meta)
+		return s.NilError, s.write_json(w, http.StatusOK, meta)
 	} else {
 		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
