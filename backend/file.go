@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sync"
 
 	"mime/multipart"
 )
@@ -44,7 +43,6 @@ func (f *FileService) make_buffer_from_file(file multipart.File) ([]byte, error)
 }
 
 func (f *FileService) process_file(file multipart.File) ([]byte, error) {
-	fmt.Println("process_file")
 	// Create a buffer to accumulate the file data
 	var buffer bytes.Buffer
 	// Define a slice to read chunks into
@@ -71,79 +69,6 @@ func (f *FileService) make_file_meta(name string, filetype string, formatted_siz
 		Size:          size,
 		UUID:          uuid,
 	}
-}
-
-/* currently doesnt work... */
-func (f *FileService) process_file_concurrently(file multipart.File, fileSize int64) ([]byte, error) {
-
-	fmt.Println("process_file_concurrently")
-	chunkSize := ONE_KB * 30
-
-	fileSize_64 := int64(fileSize)
-	chunkSize_64 := int64(chunkSize)
-
-	numChunks := int(fileSize_64 / chunkSize_64)
-
-	if fileSize_64%chunkSize != 0 {
-		numChunks++ // add an extra chunk to meet file size requirements
-	}
-
-	var wg sync.WaitGroup
-	resultChan := make(chan []byte, numChunks)
-	errChan := make(chan error, 1) // Buffered channel to avoid blocking goroutines
-
-	for i := 0; i < numChunks; i++ {
-		wg.Add((1))
-		go func(chunkIndex int) {
-			defer wg.Done()
-			offset := int64(chunkIndex) * chunkSize_64
-			size := chunkSize_64
-
-			if offset+size > fileSize_64 {
-				size = fileSize_64 - offset
-				//we're adjusting the size for the last chunk
-			}
-
-			buffer := make([]byte, size)
-
-			_, err := file.ReadAt(buffer, offset)
-			if err != nil && err != io.EOF {
-				select {
-				case errChan <- fmt.Errorf("error reading chunk %d", chunkIndex):
-				default:
-				}
-				return
-			}
-
-			resultChan <- buffer
-
-		}(i)
-	}
-
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
-
-	var resultBuffer bytes.Buffer
-
-	for {
-		select {
-		case chunk, ok := <-resultChan:
-			if !ok {
-				resultChan = nil
-			} else {
-				resultBuffer.Write(chunk)
-			}
-		case err := <-errChan:
-			return nil, err
-		}
-		if resultChan == nil {
-			break
-		}
-	}
-
-	return resultBuffer.Bytes(), nil
 }
 
 func (f *FileService) write_tmp_file(bytes []byte, fileName string) {
