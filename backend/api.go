@@ -61,9 +61,9 @@ func (s *APIServer) writeJson(w http.ResponseWriter, status int, v any) error {
 func (s *APIServer) serve() error {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/file/{uuid}", s.makeHTTPHandler(s.handleGetFile))
-	router.HandleFunc("/api/files/meta", s.makeHTTPHandler(s.handleGetFile))
-	router.HandleFunc("/api/upload", s.makeHTTPHandler(s.handlePostFile))
+	router.HandleFunc("/api/file/{uuid}", s.makeHTTPHandler(s.handle_get_file))
+	router.HandleFunc("/api/files/meta", s.makeHTTPHandler(s.handle_get_file))
+	router.HandleFunc("/api/upload", s.makeHTTPHandler(s.handle_post_file))
 
 	router.Use(loggingMiddleware)
 	router.Use(makeAuthMiddleware())
@@ -75,11 +75,11 @@ func (s *APIServer) serve() error {
 	return nil
 }
 
-func (s *APIServer) handleGetFile(w http.ResponseWriter, r *http.Request) (int, error) {
+func (s *APIServer) handle_get_file(w http.ResponseWriter, r *http.Request) (int, error) {
 
 	fmt.Println("runs")
 	if r.Method == "GET" {
-		uuid, err := s.getUUID(r)
+		uuid, err := s.get_uuid(r)
 
 		if err != nil {
 			return http.StatusBadRequest, err
@@ -99,7 +99,7 @@ func (s *APIServer) handleGetFile(w http.ResponseWriter, r *http.Request) (int, 
 	}
 }
 
-func (s *APIServer) handlePostFile(w http.ResponseWriter, r *http.Request) (int, error) {
+func (s *APIServer) handle_post_file(w http.ResponseWriter, r *http.Request) (int, error) {
 
 	if r.Method == "POST" {
 
@@ -142,7 +142,7 @@ func (s *APIServer) handlePostFile(w http.ResponseWriter, r *http.Request) (int,
 
 }
 
-func (s *APIServer) getUUID(r *http.Request) (string, error) {
+func (s *APIServer) get_uuid(r *http.Request) (string, error) {
 	uuidStr := mux.Vars(r)["uuid"]
 
 	if len(uuidStr) == 0 {
@@ -157,8 +157,3 @@ func (s *APIServer) getUUID(r *http.Request) (string, error) {
 
 	return uuidStr, nil
 }
-
-//    s, err := ioutil.ReadAll(r.Body)
-//     if err != nil {
-//         panic(err) // This would normally be a normal Error http response but I've put this here so it's easy for you to test.
-//     }
