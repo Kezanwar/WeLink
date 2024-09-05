@@ -12,7 +12,8 @@ import (
 )
 
 type APIServer struct {
-	listenAddr string
+	ListenAddr string
+	NilError   int
 }
 
 type ApiHandler func(http.ResponseWriter, *http.Request) (int, error)
@@ -36,7 +37,8 @@ type ImageUploadReq struct {
 var PORT = string(":") + os.Getenv("PORT")
 
 var Api = &APIServer{
-	listenAddr: PORT,
+	ListenAddr: PORT,
+	NilError:   0,
 }
 
 func (s *APIServer) makeHTTPHandler(f ApiHandler) http.HandlerFunc {
@@ -66,9 +68,9 @@ func (s *APIServer) serve() error {
 	router.Use(loggingMiddleware)
 	router.Use(makeAuthMiddleware())
 
-	log.Println("WeLink api running on port", s.listenAddr)
+	log.Println("WeLink api running on port", s.ListenAddr)
 
-	http.ListenAndServe(s.listenAddr, router)
+	http.ListenAndServe(s.ListenAddr, router)
 
 	return nil
 }
@@ -89,7 +91,7 @@ func (s *APIServer) handleGetFile(w http.ResponseWriter, r *http.Request) (int, 
 			return http.StatusNotFound, imgErr
 		}
 
-		return 0, s.writeJson(w, http.StatusOK, &ImageSuccessResponse{
+		return s.NilError, s.writeJson(w, http.StatusOK, &ImageSuccessResponse{
 			Image: "success",
 		})
 	} else {
@@ -133,7 +135,7 @@ func (s *APIServer) handlePostFile(w http.ResponseWriter, r *http.Request) (int,
 
 		fmt.Println(len(binstring))
 
-		return 0, s.writeJson(w, http.StatusOK, meta)
+		return s.NilError, s.writeJson(w, http.StatusOK, meta)
 	} else {
 		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
