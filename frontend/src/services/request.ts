@@ -1,3 +1,4 @@
+import formatBytes from '@app/util/bytes';
 import axios, { AxiosError, AxiosInstance, AxiosProgressEvent } from 'axios';
 
 type OnProgress = (progress: AxiosProgressEvent) => void;
@@ -24,9 +25,7 @@ class Request {
 
   static getFormDataFromFile = (file: File) => {
     const formData = new FormData();
-    formData.append('name', file.name);
-    formData.append('size', `${file.size}`);
-    formData.append('type', file.type);
+    formData.append('formatted_size', formatBytes(file.size));
     formData.append('file', file);
     return formData;
   };
