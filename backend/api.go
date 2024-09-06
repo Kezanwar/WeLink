@@ -18,20 +18,8 @@ type APIServer struct {
 
 type ApiHandler func(http.ResponseWriter, *http.Request) (int, error)
 
-type ApiError struct {
+type ApiErrorResponse struct {
 	Message string `json:"message"`
-}
-
-type EmptySuccessResponse struct {
-	Message string `json:"message"`
-}
-
-type ImageSuccessResponse struct {
-	Image string `json:"image"`
-}
-
-type ImageUploadReq struct {
-	File []byte `json:"file"`
 }
 
 var PORT = string(":") + os.Getenv("PORT")
@@ -41,12 +29,21 @@ var Api = &APIServer{
 	NilError:   0,
 }
 
-func (s *APIServer) make_http_handler(f ApiHandler) http.HandlerFunc {
+/*
+if an endpoint will only return json wrap the handler with this,
+then on success you must return NilError, s.write_json(success..) yourself but any errors can just
+return code, err and will be handled by this.
+*/
+func (s *APIServer) make_json_handler(f ApiHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		code, err := f(w, r)
 
 		if err != nil {
-			s.write_json(w, code, ApiError{Message: err.Error()})
+			var c = http.StatusInternalServerError
+			if code != s.NilError {
+				c = code
+			}
+			s.write_json(w, c, ApiErrorResponse{Message: err.Error()})
 		}
 
 	}
@@ -56,6 +53,32 @@ func (s *APIServer) write_json(w http.ResponseWriter, status int, v any) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
+}
+
+func (s *APIServer) get_uuid(r *http.Request) (string, error) {
+	uuidStr := mux.Vars(r)["uuid"]
+
+	if len(uuidStr) == 0 {
+		return "", fmt.Errorf("no ID given")
+	}
+
+	match := Utility.validate_uuid(uuidStr)
+
+	if !match {
+		return "", fmt.Errorf("not a valid uuid")
+	}
+
+	return uuidStr, nil
+}
+
+func (s *APIServer) get_uuids(r *http.Request) ([]string, error) {
+	var uuids = r.URL.Query()["uuid"]
+
+	if len(uuids) == 0 {
+		return nil, fmt.Errorf("no uuid params passed")
+	}
+
+	return uuids, nil
 }
 
 func (s *APIServer) download_file(w http.ResponseWriter, file []byte, fileMeta *FileMeta) error {
@@ -73,12 +96,13 @@ func (s *APIServer) download_file(w http.ResponseWriter, file []byte, fileMeta *
 	return nil
 }
 
-func (s *APIServer) serve() error {
+func (s *APIServer) serve() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/file/{uuid}", s.make_http_handler(s.handle_get_file))
-	router.HandleFunc("/api/files/meta", s.make_http_handler(s.handle_get_file))
-	router.HandleFunc("/api/upload", s.make_http_handler(s.handle_post_file))
+	router.HandleFunc("/api/file/download/{uuid}", s.handle_download_file)
+	router.HandleFunc("/api/files/meta" /*?query*/, s.make_json_handler(s.handle_get_files_meta))
+	router.HandleFunc("/api/file/meta/{uuid}", s.make_json_handler(s.handle_get_file_meta))
+	router.HandleFunc("/api/upload", s.make_json_handler(s.handle_upload_file))
 
 	router.Use(loggingMiddleware)
 	router.Use(makeAuthMiddleware())
@@ -87,12 +111,101 @@ func (s *APIServer) serve() error {
 
 	http.ListenAndServe(s.ListenAddr, router)
 
-	return nil
 }
 
-func (s *APIServer) handle_get_file(w http.ResponseWriter, r *http.Request) (int, error) {
+func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 
-	fmt.Println("runs")
+	if r.Method == "GET" {
+
+		uuid, err := s.get_uuid(r)
+
+		if err != nil {
+			s.write_json(w, http.StatusBadRequest, ApiErrorResponse{Message: err.Error()})
+			return
+		}
+
+		fileBytes, fileErr := Redis.get_file_binary(uuid)
+
+		if fileErr != nil {
+			s.write_json(w, http.StatusBadRequest, ApiErrorResponse{Message: fileErr.Error()})
+			return
+		}
+
+		// Assume this filename is dynamically determined by some logic
+		dynamicFilename := "customfile.txt"
+
+		// Set the Content-Type according to your file's content
+		w.Header().Set("Content-Type", "text/plain")
+
+		// Dynamically set the filename in the Content-Disposition header
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", dynamicFilename))
+
+		// Write the []byte to the response
+		if _, err := w.Write(fileBytes); err != nil {
+			http.Error(w, "Failed to write file", http.StatusInternalServerError)
+			return
+		}
+
+		// 	if fileErr != nil {
+		// 		return http.StatusNotFound, fileErr
+		// 	}
+
+		// 	return s.NilError, s.write_json(w, http.StatusOK, &ImageSuccessResponse{
+		// 		Image: "success",
+		// 	})
+		// } else {
+		// 	return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
+	}
+}
+
+type SuccessfulFilesMetaResponse struct {
+	FileMetas []FileMeta `json:"file_metas"`
+}
+
+func (s *APIServer) handle_get_files_meta(w http.ResponseWriter, r *http.Request) (int, error) {
+	defer r.Body.Close()
+
+	if r.Method == "GET" {
+		uuids, err := s.get_uuids(r)
+
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+
+		are_valid := Utility.validate_uuids(uuids)
+
+		if !are_valid {
+			return http.StatusBadRequest, fmt.Errorf("invalid uuid passed")
+		}
+
+		fmt.Println(uuids)
+
+		metas, err := Redis.get_mlti_files_meta(uuids)
+
+		//remove nil metas
+
+		if len(metas) != len(uuids) {
+			//
+		}
+
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+
+		return s.NilError, s.write_json(w, http.StatusOK, &ApiErrorResponse{
+			Message: "success",
+		})
+	} else {
+		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
+	}
+}
+
+type SuccessfulFileMetaReponse = FileMeta
+
+func (s *APIServer) handle_get_file_meta(w http.ResponseWriter, r *http.Request) (int, error) {
+	defer r.Body.Close()
+
 	if r.Method == "GET" {
 		uuid, err := s.get_uuid(r)
 
@@ -100,21 +213,25 @@ func (s *APIServer) handle_get_file(w http.ResponseWriter, r *http.Request) (int
 			return http.StatusBadRequest, err
 		}
 
-		_, fileErr := Redis.get_file(uuid)
+		meta, metaErr := Redis.get_file_meta(uuid)
 
-		if fileErr != nil {
-			return http.StatusNotFound, fileErr
+		if metaErr != nil {
+			return http.StatusNotFound, metaErr
 		}
 
-		return s.NilError, s.write_json(w, http.StatusOK, &ImageSuccessResponse{
-			Image: "success",
-		})
+		return s.NilError, s.write_json(w, http.StatusOK, meta)
 	} else {
 		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
 }
 
-func (s *APIServer) handle_post_file(w http.ResponseWriter, r *http.Request) (int, error) {
+type SuccessfulUploadResponse struct {
+	UUID    string `json:"uuid"`
+	Expires int64  `json:"expires"`
+}
+
+func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (int, error) {
+	defer r.Body.Close()
 
 	if r.Method == "POST" {
 		//get the multipart form data (max 2 gig file size)
@@ -135,7 +252,7 @@ func (s *APIServer) handle_post_file(w http.ResponseWriter, r *http.Request) (in
 		bytes, err := File.make_buffer_from_file(file)
 
 		if err != nil {
-			return http.StatusBadRequest, fmt.Errorf("failed to read file")
+			return http.StatusBadRequest, fmt.Errorf(err.Error())
 		}
 
 		name := handler.Filename
@@ -144,33 +261,35 @@ func (s *APIServer) handle_post_file(w http.ResponseWriter, r *http.Request) (in
 		formatted_size := r.FormValue("size")
 		uuid := Utility.create_uuid()
 
-		meta := File.make_file_meta(name, file_type, formatted_size, size, uuid)
+		meta := &FileMeta{
+			Name:          name,
+			Type:          file_type,
+			FormattedSize: formatted_size,
+			Size:          size,
+			UUID:          uuid,
+		}
 
-		binstring := Redis.binary_to_binstring(bytes)
+		err = Redis.set_file_binary(uuid, bytes)
 
-		File.write_tmp_file(bytes, name)
+		if err != nil {
+			return http.StatusBadRequest, fmt.Errorf("failed to save file")
+		}
 
-		fmt.Println(len(binstring))
+		err = Redis.set_file_meta(uuid, meta)
 
-		return s.NilError, s.write_json(w, http.StatusOK, meta)
+		if err != nil {
+			Redis.delete_file_binary(uuid)
+			return http.StatusBadRequest, fmt.Errorf("failed to save file meta")
+		}
+
+		response := &SuccessfulUploadResponse{
+			UUID:    uuid,
+			Expires: File.make_three_day_expiry_unix(),
+		}
+
+		return s.NilError, s.write_json(w, http.StatusOK, response)
 	} else {
 		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
 
-}
-
-func (s *APIServer) get_uuid(r *http.Request) (string, error) {
-	uuidStr := mux.Vars(r)["uuid"]
-
-	if len(uuidStr) == 0 {
-		return "", fmt.Errorf("no ID given")
-	}
-
-	match := Utility.validate_uuid(uuidStr)
-
-	if !match {
-		return "", fmt.Errorf("not a valid uuid")
-	}
-
-	return uuidStr, nil
 }

@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"mime/multipart"
 )
@@ -34,12 +35,7 @@ type FileMeta struct {
 var File = &FileService{}
 
 func (f *FileService) make_buffer_from_file(file multipart.File) ([]byte, error) {
-	// size := handler.Size
-	// if size <= int64(FIVE_MB) {
-	// 	return f.process_file(file)
-	// }
 	return f.process_file(file)
-	// return f.process_file_concurrently(file, size)
 }
 
 func (f *FileService) process_file(file multipart.File) ([]byte, error) {
@@ -51,7 +47,7 @@ func (f *FileService) process_file(file multipart.File) ([]byte, error) {
 	for {
 		n, err := file.Read(chunk)
 		if err != nil && err != io.EOF {
-			return nil, fmt.Errorf("failed to read file")
+			return nil, fmt.Errorf(err.Error())
 		}
 		if n == 0 {
 			break
@@ -59,16 +55,6 @@ func (f *FileService) process_file(file multipart.File) ([]byte, error) {
 		buffer.Write(chunk[:n])
 	}
 	return buffer.Bytes(), nil
-}
-
-func (f *FileService) make_file_meta(name string, filetype string, formatted_size string, size int64, uuid string) *FileMeta {
-	return &FileMeta{
-		Name:          name,
-		Type:          filetype,
-		FormattedSize: formatted_size,
-		Size:          size,
-		UUID:          uuid,
-	}
 }
 
 func (f *FileService) write_tmp_file(bytes []byte, fileName string) {
@@ -95,4 +81,8 @@ func (f *FileService) write_tmp_file(bytes []byte, fileName string) {
 	if err != nil {
 		log.Fatalf("failed to write to file: %v", err)
 	}
+}
+
+func (f *FileService) make_three_day_expiry_unix() int64 {
+	return time.Now().Add(THREE_DAYS).Unix()
 }

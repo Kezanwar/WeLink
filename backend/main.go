@@ -12,10 +12,5 @@ func main() {
 		log.Fatal(redisErr)
 	}
 
-	apiErr := Api.serve()
-
-	if apiErr != nil {
-		log.Fatal(apiErr)
-	}
-
+	Api.serve()
 }

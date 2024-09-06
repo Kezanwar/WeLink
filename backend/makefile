@@ -17,5 +17,8 @@ start-redis:
 stop-redis:
 	@docker stop we-link-redis
 
+redis-cli:
+	@docker exec -it we-link-redis redis-cli
+
 test: 
 	@go test -v ./

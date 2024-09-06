@@ -39,3 +39,12 @@ var testUUID = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-
 func (u *Util) validate_uuid(uuid string) bool {
 	return testUUID.MatchString(uuid)
 }
+
+func (u *Util) validate_uuids(uuids []string) bool {
+	for i := 0; i < len(uuids); i++ {
+		if !u.validate_uuid(uuids[i]) {
+			return false
+		}
+	}
+	return true
+}
