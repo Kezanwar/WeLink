@@ -78,6 +78,12 @@ func (s *APIServer) get_uuids(r *http.Request) ([]string, error) {
 		return nil, fmt.Errorf("no uuid params passed")
 	}
 
+	are_valid := Utility.validate_uuids(uuids)
+
+	if !are_valid {
+		return nil, fmt.Errorf("invalid uuid passed")
+	}
+
 	return uuids, nil
 }
 
@@ -99,10 +105,10 @@ func (s *APIServer) download_file(w http.ResponseWriter, file []byte, fileMeta *
 func (s *APIServer) serve() {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/file/download/{uuid}", s.handle_download_file)
-	router.HandleFunc("/api/files/meta" /*?query*/, s.make_json_handler(s.handle_get_files_meta))
-	router.HandleFunc("/api/file/meta/{uuid}", s.make_json_handler(s.handle_get_file_meta))
 	router.HandleFunc("/api/upload", s.make_json_handler(s.handle_upload_file))
+	router.HandleFunc("/api/file/meta/{uuid}", s.make_json_handler(s.handle_get_file_meta))
+	router.HandleFunc("/api/files/meta" /*?query*/, s.make_json_handler(s.handle_get_files_meta))
+	router.HandleFunc("/api/file/download/{uuid}", s.handle_download_file)
 
 	router.Use(loggingMiddleware)
 	router.Use(makeAuthMiddleware())
@@ -111,6 +117,128 @@ func (s *APIServer) serve() {
 
 	http.ListenAndServe(s.ListenAddr, router)
 
+}
+
+type SuccessfulUploadResponse struct {
+	UUID    string `json:"uuid"`
+	Expires int64  `json:"expires"`
+}
+
+func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (int, error) {
+	defer r.Body.Close()
+
+	if r.Method == "POST" {
+		//get the multipart form data (max 2 gig file size)
+		err := r.ParseMultipartForm(TWO_GIG)
+
+		if err != nil {
+			return http.StatusBadRequest, fmt.Errorf("failed to parse multipart form")
+		}
+
+		file, handler, err := r.FormFile("file")
+
+		if err != nil {
+			return http.StatusBadRequest, fmt.Errorf("failed to parse file")
+		}
+
+		defer file.Close()
+
+		bytes, err := File.make_buffer_from_file(file)
+
+		if err != nil {
+			return http.StatusBadRequest, fmt.Errorf(err.Error())
+		}
+
+		name := handler.Filename
+		size := handler.Size
+		file_type := handler.Header.Get("Content-Type")
+		formatted_size := r.FormValue("formatted_size")
+		uuid := Utility.create_uuid()
+
+		meta := &FileMeta{
+			Name:          name,
+			Type:          file_type,
+			FormattedSize: formatted_size,
+			Size:          size,
+			UUID:          uuid,
+		}
+
+		err = Redis.set_file_binary(uuid, bytes)
+
+		if err != nil {
+			return http.StatusBadRequest, fmt.Errorf("failed to save file")
+		}
+
+		err = Redis.set_file_meta(uuid, meta)
+
+		if err != nil {
+			Redis.delete_file_binary(uuid)
+			return http.StatusBadRequest, fmt.Errorf("failed to save file meta")
+		}
+
+		response := &SuccessfulUploadResponse{
+			UUID:    uuid,
+			Expires: File.make_three_day_expiry_unix(),
+		}
+
+		return s.NilError, s.write_json(w, http.StatusOK, response)
+	} else {
+		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
+	}
+
+}
+
+type SuccessfulFileMetaReponse = FileMeta
+
+func (s *APIServer) handle_get_file_meta(w http.ResponseWriter, r *http.Request) (int, error) {
+	defer r.Body.Close()
+
+	if r.Method == "GET" {
+		uuid, err := s.get_uuid(r)
+
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+
+		meta, metaErr := Redis.get_file_meta(uuid)
+
+		if metaErr != nil {
+			return http.StatusNotFound, metaErr
+		}
+
+		return s.NilError, s.write_json(w, http.StatusOK, meta)
+	} else {
+		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
+	}
+}
+
+type SuccessfulFilesMetaResponse struct {
+	FileMetas []*FileMeta `json:"file_metas"`
+}
+
+func (s *APIServer) handle_get_files_meta(w http.ResponseWriter, r *http.Request) (int, error) {
+	defer r.Body.Close()
+
+	if r.Method == "GET" {
+		uuids, err := s.get_uuids(r)
+
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+
+		metas, err := Redis.get_mlti_files_meta(uuids)
+
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+
+		return s.NilError, s.write_json(w, http.StatusOK, &SuccessfulFilesMetaResponse{
+			FileMetas: metas,
+		})
+
+	} else {
+		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
+	}
 }
 
 func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request) {
@@ -157,139 +285,4 @@ func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request)
 		// } else {
 		// 	return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
-}
-
-type SuccessfulFilesMetaResponse struct {
-	FileMetas []FileMeta `json:"file_metas"`
-}
-
-func (s *APIServer) handle_get_files_meta(w http.ResponseWriter, r *http.Request) (int, error) {
-	defer r.Body.Close()
-
-	if r.Method == "GET" {
-		uuids, err := s.get_uuids(r)
-
-		if err != nil {
-			return http.StatusBadRequest, err
-		}
-
-		are_valid := Utility.validate_uuids(uuids)
-
-		if !are_valid {
-			return http.StatusBadRequest, fmt.Errorf("invalid uuid passed")
-		}
-
-		fmt.Println(uuids)
-
-		metas, err := Redis.get_mlti_files_meta(uuids)
-
-		//remove nil metas
-
-		if len(metas) != len(uuids) {
-			//
-		}
-
-		if err != nil {
-			return http.StatusBadRequest, err
-		}
-
-		return s.NilError, s.write_json(w, http.StatusOK, &ApiErrorResponse{
-			Message: "success",
-		})
-	} else {
-		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
-	}
-}
-
-type SuccessfulFileMetaReponse = FileMeta
-
-func (s *APIServer) handle_get_file_meta(w http.ResponseWriter, r *http.Request) (int, error) {
-	defer r.Body.Close()
-
-	if r.Method == "GET" {
-		uuid, err := s.get_uuid(r)
-
-		if err != nil {
-			return http.StatusBadRequest, err
-		}
-
-		meta, metaErr := Redis.get_file_meta(uuid)
-
-		if metaErr != nil {
-			return http.StatusNotFound, metaErr
-		}
-
-		return s.NilError, s.write_json(w, http.StatusOK, meta)
-	} else {
-		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
-	}
-}
-
-type SuccessfulUploadResponse struct {
-	UUID    string `json:"uuid"`
-	Expires int64  `json:"expires"`
-}
-
-func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (int, error) {
-	defer r.Body.Close()
-
-	if r.Method == "POST" {
-		//get the multipart form data (max 2 gig file size)
-		err := r.ParseMultipartForm(TWO_GIG)
-
-		if err != nil {
-			return http.StatusBadRequest, fmt.Errorf("failed to parse multipart form")
-		}
-
-		file, handler, err := r.FormFile("file")
-
-		if err != nil {
-			return http.StatusBadRequest, fmt.Errorf("failed to parse file")
-		}
-
-		defer file.Close()
-
-		bytes, err := File.make_buffer_from_file(file)
-
-		if err != nil {
-			return http.StatusBadRequest, fmt.Errorf(err.Error())
-		}
-
-		name := handler.Filename
-		size := handler.Size
-		file_type := handler.Header.Get("Content-Type")
-		formatted_size := r.FormValue("size")
-		uuid := Utility.create_uuid()
-
-		meta := &FileMeta{
-			Name:          name,
-			Type:          file_type,
-			FormattedSize: formatted_size,
-			Size:          size,
-			UUID:          uuid,
-		}
-
-		err = Redis.set_file_binary(uuid, bytes)
-
-		if err != nil {
-			return http.StatusBadRequest, fmt.Errorf("failed to save file")
-		}
-
-		err = Redis.set_file_meta(uuid, meta)
-
-		if err != nil {
-			Redis.delete_file_binary(uuid)
-			return http.StatusBadRequest, fmt.Errorf("failed to save file meta")
-		}
-
-		response := &SuccessfulUploadResponse{
-			UUID:    uuid,
-			Expires: File.make_three_day_expiry_unix(),
-		}
-
-		return s.NilError, s.write_json(w, http.StatusOK, response)
-	} else {
-		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
-	}
-
 }

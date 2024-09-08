@@ -94,6 +94,8 @@ func (r *RedisClient) get_file_meta(uuid string) (*FileMeta, error) {
 
 	if err == redis.Nil {
 		return nil, fmt.Errorf("meta not found")
+	} else if err != nil {
+		return nil, fmt.Errorf("meta search failed")
 	}
 
 	meta := &FileMeta{}
@@ -107,26 +109,34 @@ func (r *RedisClient) get_file_meta(uuid string) (*FileMeta, error) {
 	return meta, nil
 }
 
-func (r *RedisClient) get_mlti_files_meta(uuids []string) ([]FileMeta, error) {
+func (r *RedisClient) get_mlti_files_meta(uuids []string) ([]*FileMeta, error) {
 	var keys []string
 
-	for i := 0; i < len(uuids); i++ {
-		keys = append(keys, uuids[i]+r.meta_suffix)
+	for _, id := range uuids {
+		keys = append(keys, id+r.meta_suffix)
 	}
 
-	meta_array, err := r.rdb.MGet(ctx, keys...).Result()
+	results, err := r.rdb.MGet(ctx, keys...).Result()
 
-	if err == redis.Nil {
-		return nil, fmt.Errorf("metas not found")
+	if err != nil {
+		return nil, fmt.Errorf("error ")
 	}
 
-	fmt.Println(meta_array...)
+	var out = make([]*FileMeta, 0)
 
-	// meta := &FileMeta{}
+	for _, v := range results {
+		str, ok := v.(string)
+		if ok {
+			parsed := &FileMeta{}
+			err = json.Unmarshal([]byte(str), parsed)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing meta")
+			}
+			out = append(out, parsed)
+		}
+	}
 
-	// err = json.Unmarshal([]byte(meta_str), meta)
-
-	return nil, fmt.Errorf("errrrr")
+	return out, nil
 }
 
 func (r *RedisClient) set_file_meta(uuid string, fileMeta *FileMeta) error {
