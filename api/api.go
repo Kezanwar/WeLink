@@ -113,7 +113,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 	defer r.Body.Close()
 
 	if r.Method == "POST" {
-		//get the multipart form data (max 2 gig file size)
+
 		err := r.ParseMultipartForm(ONE_MB)
 
 		if err != nil {
@@ -167,7 +167,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 
 		response := &SuccessfulUploadResponse{
 			UUID:    uuid,
-			Expires: File.make_three_day_expiry_unix(),
+			Expires: File.make_one_day_expiry_unix(),
 		}
 
 		return s.NilError, s.write_json(w, http.StatusOK, response)

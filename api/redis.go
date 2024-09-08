@@ -14,7 +14,7 @@ import (
 
 var ctx = context.Background()
 
-const THREE_DAYS = time.Hour * 24 * 3
+const ONE_DAY = time.Hour * 24
 
 type RedisClient struct {
 	rdb         *redis.Client
@@ -66,7 +66,7 @@ func (r *RedisClient) set_file_binary(uuid string, file []byte) error {
 	var str_file = r.binary_to_binstring(file)
 	var key = uuid + r.bin_suffix
 
-	err := r.rdb.Set(ctx, key, str_file, THREE_DAYS).Err()
+	err := r.rdb.Set(ctx, key, str_file, ONE_DAY).Err()
 
 	if err != nil {
 		return err
@@ -150,7 +150,7 @@ func (r *RedisClient) set_file_meta(uuid string, fileMeta *FileMeta) error {
 
 	var key = uuid + r.meta_suffix
 
-	err = r.rdb.Set(ctx, key, meta_str, THREE_DAYS).Err()
+	err = r.rdb.Set(ctx, key, meta_str, ONE_DAY).Err()
 
 	if err != nil {
 		return err

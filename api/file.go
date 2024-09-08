@@ -37,9 +37,9 @@ type FileMeta struct {
 var File = &FileService{}
 
 func (f *FileService) make_buffer_from_file(file multipart.File) ([]byte, error) {
-	// Create a buffer to accumulate the file data
+
 	var buffer bytes.Buffer
-	// Define a slice to read chunks into
+
 	chunk := make([]byte, ONE_KB)
 
 	for {
@@ -82,6 +82,6 @@ func (f *FileService) write_tmp_file(bytes []byte, fileName string) {
 	}
 }
 
-func (f *FileService) make_three_day_expiry_unix() int64 {
-	return time.Now().Add(THREE_DAYS).Unix()
+func (f *FileService) make_one_day_expiry_unix() int64 {
+	return time.Now().Add(ONE_DAY).Unix()
 }
