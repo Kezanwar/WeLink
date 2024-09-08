@@ -18,6 +18,8 @@ const TEN_KB int64 = ONE_KB * 10
 const ONE_MB int64 = TEN_KB * 100
 const FIVE_MB int64 = ONE_MB * 5
 
+const FIVE_HUNDRED_MB = FIVE_MB * 100
+
 const ONE_GIG int64 = ONE_MB * 1000
 const TWO_GIG int64 = ONE_GIG * 2
 
@@ -35,10 +37,6 @@ type FileMeta struct {
 var File = &FileService{}
 
 func (f *FileService) make_buffer_from_file(file multipart.File) ([]byte, error) {
-	return f.process_file(file)
-}
-
-func (f *FileService) process_file(file multipart.File) ([]byte, error) {
 	// Create a buffer to accumulate the file data
 	var buffer bytes.Buffer
 	// Define a slice to read chunks into
@@ -54,6 +52,7 @@ func (f *FileService) process_file(file multipart.File) ([]byte, error) {
 		}
 		buffer.Write(chunk[:n])
 	}
+
 	return buffer.Bytes(), nil
 }
 

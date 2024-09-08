@@ -114,13 +114,17 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 
 	if r.Method == "POST" {
 		//get the multipart form data (max 2 gig file size)
-		err := r.ParseMultipartForm(TWO_GIG)
+		err := r.ParseMultipartForm(ONE_MB)
 
 		if err != nil {
 			return http.StatusBadRequest, fmt.Errorf("failed to parse multipart form")
 		}
 
 		file, handler, err := r.FormFile("file")
+
+		if handler.Size > FIVE_HUNDRED_MB {
+			return http.StatusBadRequest, fmt.Errorf("file too large, limit is 500mb")
+		}
 
 		if err != nil {
 			return http.StatusBadRequest, fmt.Errorf("failed to parse file")
@@ -151,7 +155,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 		err = Redis.set_file_binary(uuid, bytes)
 
 		if err != nil {
-			return http.StatusBadRequest, fmt.Errorf("failed to save file")
+			return http.StatusBadRequest, err
 		}
 
 		err = Redis.set_file_meta(uuid, meta)
