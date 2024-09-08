@@ -87,21 +87,6 @@ func (s *APIServer) get_uuids(r *http.Request) ([]string, error) {
 	return uuids, nil
 }
 
-func (s *APIServer) download_file(w http.ResponseWriter, file []byte, fileMeta *FileMeta) error {
-	// Set the appropriate content type - adjust as needed
-	w.Header().Set("Content-Type", fileMeta.Type)
-
-	// Set the content disposition header for downloading the file
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileMeta.Name))
-
-	// Write the []byte to the response
-	if _, err := w.Write(file); err != nil {
-		return fmt.Errorf("failed to download file")
-	}
-
-	return nil
-}
-
 func (s *APIServer) serve() {
 	router := mux.NewRouter()
 
@@ -260,29 +245,20 @@ func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		// Assume this filename is dynamically determined by some logic
-		dynamicFilename := "customfile.txt"
+		fileMeta, metaErr := Redis.get_file_meta(uuid)
 
-		// Set the Content-Type according to your file's content
-		w.Header().Set("Content-Type", "text/plain")
-
-		// Dynamically set the filename in the Content-Disposition header
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", dynamicFilename))
-
-		// Write the []byte to the response
-		if _, err := w.Write(fileBytes); err != nil {
-			http.Error(w, "Failed to write file", http.StatusInternalServerError)
+		if metaErr != nil {
+			s.write_json(w, http.StatusBadRequest, ApiErrorResponse{Message: metaErr.Error()})
 			return
 		}
 
-		// 	if fileErr != nil {
-		// 		return http.StatusNotFound, fileErr
-		// 	}
+		w.Header().Set("Content-Type", fileMeta.Type)
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileMeta.Name))
 
-		// 	return s.NilError, s.write_json(w, http.StatusOK, &ImageSuccessResponse{
-		// 		Image: "success",
-		// 	})
-		// } else {
-		// 	return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
+		if _, err := w.Write(fileBytes); err != nil {
+			s.write_json(w, http.StatusBadRequest, ApiErrorResponse{Message: "failed to write file to response"})
+			return
+		}
+
 	}
 }
