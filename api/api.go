@@ -3,10 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/fatih/color"
 	"github.com/gorilla/mux"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -43,15 +45,16 @@ func (s *APIServer) make_json_handler(f ApiHandler) http.HandlerFunc {
 			if code != s.NilError {
 				c = code
 			}
-			s.write_json(w, c, ApiErrorResponse{Message: err.Error()})
+			s.write_json(w, r, c, ApiErrorResponse{Message: err.Error()})
 		}
 
 	}
 }
 
-func (s *APIServer) write_json(w http.ResponseWriter, status int, v any) error {
+func (s *APIServer) write_json(w http.ResponseWriter, r *http.Request, status int, v any) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
+	s.log_resp(status, r)
 	return json.NewEncoder(w).Encode(v)
 }
 
@@ -85,6 +88,14 @@ func (s *APIServer) get_uuids(r *http.Request) ([]string, error) {
 	}
 
 	return uuids, nil
+}
+
+func (s *APIServer) log_resp(code int, r *http.Request) {
+	if code >= 400 {
+		color.Red("%d --- %s", code, r.RequestURI)
+		return
+	}
+	color.Green("%d --- %s", code, r.RequestURI)
 }
 
 func (s *APIServer) serve() {
@@ -170,7 +181,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 			Expires: File.make_one_day_expiry_unix(),
 		}
 
-		return s.NilError, s.write_json(w, http.StatusOK, response)
+		return s.NilError, s.write_json(w, r, http.StatusOK, response)
 	} else {
 		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
@@ -195,7 +206,7 @@ func (s *APIServer) handle_get_file_meta(w http.ResponseWriter, r *http.Request)
 			return http.StatusNotFound, metaErr
 		}
 
-		return s.NilError, s.write_json(w, http.StatusOK, meta)
+		return s.NilError, s.write_json(w, r, http.StatusOK, meta)
 	} else {
 		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
@@ -221,7 +232,7 @@ func (s *APIServer) handle_get_files_meta(w http.ResponseWriter, r *http.Request
 			return http.StatusBadRequest, err
 		}
 
-		return s.NilError, s.write_json(w, http.StatusOK, &SuccessfulFilesMetaResponse{
+		return s.NilError, s.write_json(w, r, http.StatusOK, &SuccessfulFilesMetaResponse{
 			FileMetas: metas,
 		})
 
@@ -238,21 +249,21 @@ func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request)
 		uuid, err := s.get_uuid(r)
 
 		if err != nil {
-			s.write_json(w, http.StatusBadRequest, ApiErrorResponse{Message: err.Error()})
+			s.write_json(w, r, http.StatusBadRequest, ApiErrorResponse{Message: err.Error()})
 			return
 		}
 
 		fileBytes, fileErr := Redis.get_file_binary(uuid)
 
 		if fileErr != nil {
-			s.write_json(w, http.StatusBadRequest, ApiErrorResponse{Message: fileErr.Error()})
+			s.write_json(w, r, http.StatusBadRequest, ApiErrorResponse{Message: fileErr.Error()})
 			return
 		}
 
 		fileMeta, metaErr := Redis.get_file_meta(uuid)
 
 		if metaErr != nil {
-			s.write_json(w, http.StatusBadRequest, ApiErrorResponse{Message: metaErr.Error()})
+			s.write_json(w, r, http.StatusBadRequest, ApiErrorResponse{Message: metaErr.Error()})
 			return
 		}
 
@@ -260,8 +271,10 @@ func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileMeta.Name))
 
 		if _, err := w.Write(fileBytes); err != nil {
-			s.write_json(w, http.StatusBadRequest, ApiErrorResponse{Message: "failed to write file to response"})
+			s.write_json(w, r, http.StatusBadRequest, ApiErrorResponse{Message: "failed to write file to response"})
 			return
+		} else {
+			s.log_resp(http.StatusAccepted, r)
 		}
 
 	}

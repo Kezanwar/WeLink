@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
 	"net/http"
+
+	"github.com/fatih/color"
 )
 
 func makeAuthMiddleware() func(http.Handler) http.Handler {
@@ -37,10 +38,7 @@ func makeAuthMiddleware() func(http.Handler) http.Handler {
 
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Do stuff here
-		log.Println(r.RequestURI)
-		log.Println("---------------------------------------------------")
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
+		color.Cyan("%s --- %s", r.Method, r.RequestURI)
 		next.ServeHTTP(w, r)
 	})
 }
