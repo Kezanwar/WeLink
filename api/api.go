@@ -65,7 +65,7 @@ func (s *APIServer) get_uuid(r *http.Request) (string, error) {
 		return "", fmt.Errorf("no ID given")
 	}
 
-	match := Utility.validate_uuid(uuidStr)
+	match := UUID.validate_uuid(uuidStr)
 
 	if !match {
 		return "", fmt.Errorf("not a valid uuid")
@@ -81,7 +81,7 @@ func (s *APIServer) get_uuids(r *http.Request) ([]string, error) {
 		return nil, fmt.Errorf("no uuid params passed")
 	}
 
-	are_valid := Utility.validate_uuids(uuids)
+	are_valid := UUID.validate_uuids(uuids)
 
 	if !are_valid {
 		return nil, fmt.Errorf("invalid uuid passed")
@@ -103,7 +103,6 @@ func (s *APIServer) serve() {
 
 	router.Use(corsMiddleware)
 	router.Use(loggingMiddleware)
-	router.Use(makeAuthMiddleware())
 
 	router.HandleFunc("/api/upload", s.make_json_handler(s.handle_upload_file))
 	router.HandleFunc("/api/file/meta/{uuid}", s.make_json_handler(s.handle_get_file_meta))
@@ -154,7 +153,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 		size := handler.Size
 		file_type := handler.Header.Get("Content-Type")
 		formatted_size := r.FormValue("formatted_size")
-		uuid := Utility.create_uuid()
+		uuid := UUID.create_uuid()
 
 		meta := &FileMeta{
 			Name:          name,

@@ -6,22 +6,22 @@ import (
 	"github.com/google/uuid"
 )
 
-type Util struct {
+type UUIDServce struct {
 }
 
-var Utility = &Util{}
+var UUID = &UUIDServce{}
 
-func (u *Util) create_uuid() string {
+func (u *UUIDServce) create_uuid() string {
 	return uuid.New().String()
 }
 
 var testUUID = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$`)
 
-func (u *Util) validate_uuid(uuid string) bool {
+func (u *UUIDServce) validate_uuid(uuid string) bool {
 	return testUUID.MatchString(uuid)
 }
 
-func (u *Util) validate_uuids(uuids []string) bool {
+func (u *UUIDServce) validate_uuids(uuids []string) bool {
 	for i := 0; i < len(uuids); i++ {
 		if !u.validate_uuid(uuids[i]) {
 			return false
