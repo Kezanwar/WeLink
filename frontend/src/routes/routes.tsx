@@ -3,10 +3,10 @@ import { useLocation, useRoutes } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
 // pages
-import Home from '../pages/Home/Home';
+import Home from '@app/pages/Home';
 
 // config
-import { PATH_HOME, PATH_SEARCH } from '../constants/paths';
+import { PATH_HOME, PATH_SEARCH } from '@app/constants/paths';
 
 // ----------------------------------------------------------------------
 
