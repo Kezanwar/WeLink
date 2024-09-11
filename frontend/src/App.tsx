@@ -1,7 +1,7 @@
 // components
-import ThemeRoot from '@app/components/layout/ThemeRoot';
-import Header from '@app/components/features/Header';
-import Toast from './components/features/Toast';
+import ThemeRoot from '@app/layout/ThemeRoot';
+import Header from '@app/features/Header';
+import Toast from '@app/features/Toast';
 
 //routes
 import Router from '@app/routes/routes';

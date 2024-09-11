@@ -2,19 +2,20 @@ import React, { FC, useRef, useState } from 'react';
 import { IoMdClose } from 'react-icons/io';
 import { useDropArea } from 'react-use';
 import { IoMdLink } from 'react-icons/io';
-
-import useToastStore from '@app/stores/toast';
-import useFileStore, { useProcessFile } from '@app/stores/file';
-
 import SecondaryButton from '@app/components/buttons/SecondaryButton/SecondaryButton';
 import File from './components/File';
-
 import PrimaryButton from '@app/components/buttons/PrimaryButton';
-import Upload from './components/Upload';
+import UploadZone from './components/UploadZone';
+
+import useToastStore from '@app/stores/toast';
+import useFileStore from '@app/stores/file';
+
+import useProcessFile from '@app/hooks/useProcessFile';
+
 import Request from '@app/services/request';
 
-import UploadModal from '../UploadModal';
 import cc from '@app/util/cc';
+import UploadModal from './components/UploadModal';
 
 const Dropzone: FC = () => {
   const {
@@ -95,7 +96,7 @@ const Dropzone: FC = () => {
         ])}
         {...bond}
       >
-        {!file ? <Upload over={state.over} /> : <File />}
+        {!file ? <UploadZone over={state.over} /> : <File />}
       </button>
       {processSuccess && !!file && (
         <div className="flex items-center gap-8">

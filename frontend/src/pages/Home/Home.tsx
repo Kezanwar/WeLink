@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { BodyText } from '@app/components/typography/BodyText';
 import { Heading } from '@app/components/typography/Heading';
-import Dropzone from '@app/components/features/Dropzone';
+import Dropzone from '@app/features/Dropzone';
 
 const Home: React.FC = () => {
   return (

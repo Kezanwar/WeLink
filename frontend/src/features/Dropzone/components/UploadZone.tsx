@@ -3,7 +3,7 @@ import { IoCloudUploadOutline } from 'react-icons/io5';
 
 type Props = { over: boolean };
 
-const Upload: FC<Props> = ({ over }) => {
+const UploadZone: FC<Props> = ({ over }) => {
   const text_color = useMemo(() => {
     if (over) {
       return 'text-green-400 dark:text-green-400';
@@ -31,4 +31,4 @@ const Upload: FC<Props> = ({ over }) => {
   );
 };
 
-export default Upload;
+export default UploadZone;
