@@ -5,21 +5,30 @@ import { IoMdLink } from 'react-icons/io';
 
 import useToastStore from '@app/stores/toast';
 import useFileStore, { useProcessFile } from '@app/stores/file';
-import Modal from '@app/components/modal';
+
 import SecondaryButton from '@app/components/buttons/SecondaryButton/SecondaryButton';
 import File from './components/File';
-import cc from '@app/util/cc';
+
 import PrimaryButton from '@app/components/buttons/PrimaryButton';
 import Upload from './components/Upload';
 import Request from '@app/services/request';
 
-const Dropzone: FC = () => {
-  const { file, isUploading, uploadSuccess } = useFileStore();
-  const { enqueueMessage } = useToastStore();
-  const [showModal, setShowModal] = useState(false);
-  const { processFile, abort } = useProcessFile();
+import UploadModal from '../UploadModal';
+import cc from '@app/util/cc';
 
-  const closeModal = () => setShowModal(false);
+const Dropzone: FC = () => {
+  const {
+    file,
+    isProcessing,
+    processSuccess,
+    onStartUpload,
+    onUploadProgressChange,
+    onUploadError,
+    onUploadSuccess
+  } = useFileStore();
+  const { enqueueMessage } = useToastStore();
+
+  const { processFile, abort } = useProcessFile();
 
   const [bond, state] = useDropArea({
     onFiles: async (files) => {
@@ -45,10 +54,23 @@ const Dropzone: FC = () => {
     }
   };
 
-  const handleGetLink = () => {
-    console.log(file);
-    enqueueMessage({ text: 'test', type: 'success' });
-    setShowModal(true);
+  const handleGetLink = async () => {
+    // enqueueMessage({ text: 'test', type: 'success' });
+    if (!file) {
+      return;
+    }
+
+    try {
+      onStartUpload();
+      const res = await Request.postFile(file, (ev) =>
+        onUploadProgressChange(ev.progress ? Math.round(ev.progress * 100) : 0)
+      );
+      onUploadSuccess(res.data);
+    } catch (error) {
+      Request.errorHandler(error, (err) => {
+        onUploadError(err.message);
+      });
+    }
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,13 +91,13 @@ const Dropzone: FC = () => {
         onClick={onUploadAreaClick}
         className={cc([
           'mt-4 group transition-all  w-96 h-80 rounded-2xl flex flex-col justify-center items-center gap-4',
-          (isUploading || file) && 'pointer-events-none'
+          (isProcessing || file) && 'pointer-events-none'
         ])}
         {...bond}
       >
         {!file ? <Upload over={state.over} /> : <File />}
       </button>
-      {uploadSuccess && file && (
+      {processSuccess && !!file && (
         <div className="flex items-center gap-8">
           <SecondaryButton
             onClick={abort}
@@ -90,15 +112,7 @@ const Dropzone: FC = () => {
           />
         </div>
       )}
-      {showModal && (
-        <Modal
-          title="Uploading file..."
-          description="Please do not close this webpage"
-          type="loading"
-          onClose={closeModal}
-          showCancel
-        />
-      )}
+      {<UploadModal />}
     </>
   );
 };

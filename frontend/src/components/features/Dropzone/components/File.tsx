@@ -48,7 +48,7 @@ import { AiOutlineApple } from 'react-icons/ai';
 import ProgressBar from '@app/components/progress-bar';
 import useFileStore from '@app/stores/file';
 import cc from '@app/util/cc';
-import formatBytes from '@app/util/bytes';
+import formatBytes from '@app/util/format-bytes';
 
 const fileTypeIcons = {
   pdf: <BsFiletypePdf size={40} className="text-red-700 mb-3" />,
@@ -112,7 +112,7 @@ const FileIcon: FC<IconProps> = ({ ext }) => {
 };
 
 const File = () => {
-  const { file, isUploading, uploadingProgress } = useFileStore();
+  const { file, isProcessing, processingProgress } = useFileStore();
 
   const ext: Extension = useMemo(() => {
     const txtArr = file?.name.split('.');
@@ -125,7 +125,7 @@ const File = () => {
       <div
         className={cc([
           'h-full w-full flex flex-col items-center justify-center ',
-          isUploading && 'opacity-50'
+          isProcessing && 'opacity-50'
         ])}
       >
         <FileIcon ext={ext} />
@@ -133,7 +133,12 @@ const File = () => {
         <p className="text-sm text-gray-400">{formatBytes(file?.size)}</p>
       </div>
       <div className="h-[40px]">
-        {isUploading && <ProgressBar progress={uploadingProgress} />}
+        {isProcessing && (
+          <>
+            <ProgressBar progress={processingProgress} />
+            <p className="text-sm text-gray-400 mt-2">Checking file...</p>
+          </>
+        )}
       </div>
     </>
   ) : null;

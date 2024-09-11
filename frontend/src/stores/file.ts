@@ -1,56 +1,117 @@
+import { SuccessfulFileUploadResponse } from '@app/services/request';
 import { useRef } from 'react';
 import { create } from 'zustand';
 
 interface FileStore {
   file?: File;
-  base64: string;
-  isUploading: boolean;
-  uploadingProgress: number;
-  uploadError: boolean;
-  uploadSuccess: boolean;
-  onAbort: () => void;
-  onUploadSuccess: (base64: string) => void;
-  onUploadError: () => void;
   setFile: (str: File) => void;
-  updateProgress: (progress: number) => void;
-  setIsUploading: (bool: boolean) => void;
+
+  //processing
+  base64: string;
+  isProcessing: boolean;
+  processingProgress: number;
+  processError: boolean;
+  processSuccess: boolean;
+  onProcessAbort: () => void;
+  onProcessSuccess: (base64: string) => void;
+  onProcessError: () => void;
+  onProcessingProgressChange: (progress: number) => void;
+  setIsProcessing: (bool: boolean) => void;
+
+  //uploading
+  showUploadModal: boolean;
+  isUploading: boolean;
+  uploadProgress: number;
+  fileUUID: string | undefined;
+  fileExpiry: Date | undefined;
+  uploadSuccess: boolean;
+  uploadError: string | undefined;
+  closeUploadModal: () => void;
+  onStartUpload: () => void;
+  onUploadSuccess: (response: SuccessfulFileUploadResponse) => void;
+  onUploadError: (msg: string) => void;
+  onUploadProgressChange: (progress: number) => void;
 }
 
 const useFileStore = create<FileStore>()((set) => ({
   file: undefined,
+  setFile: (file) => set(() => ({ file: file })),
+
+  //processing
   base64: '',
-  isUploading: false,
-  uploadingProgress: 0,
-  uploadError: false,
-  uploadSuccess: false,
-  onAbort: () =>
+  isProcessing: false,
+  processingProgress: 0,
+  processError: false,
+  processSuccess: false,
+  onProcessAbort: () => {
     set(() => ({
       file: undefined,
       base64: '',
-      uploadingProgress: 0,
-      isUploading: false,
-      uploadSuccess: false,
-      uploadError: false
-    })),
-  onUploadSuccess: (base64) =>
+      processingProgress: 0,
+      isProcessing: false,
+      processSuccess: false,
+      processError: false
+    }));
+  },
+  onProcessSuccess: (base64) => {
     set(() => ({
       base64: base64,
-      isUploading: false,
-      uploadSuccess: true,
-      uploadError: false
-    })),
-  onUploadError: () =>
+      isProcessing: false,
+      processSuccess: true,
+      processError: false
+    }));
+  },
+  onProcessError: () => {
     set(() => ({
       file: undefined,
       base64: '',
-      uploadingProgress: 0,
+      processingProgress: 0,
+      isProcessing: false,
+      processSuccess: false,
+      processError: true
+    }));
+  },
+
+  onProcessingProgressChange: (progress) =>
+    set(() => ({ processingProgress: progress })),
+  setIsProcessing: (boolean) => set(() => ({ isProcessing: boolean })),
+
+  //uploading
+
+  showUploadModal: false,
+  isUploading: false,
+  uploadProgress: 0,
+  uploadSuccess: false,
+  uploadError: undefined,
+  fileUUID: undefined,
+  fileExpiry: undefined,
+  closeUploadModal: () => {
+    set(() => ({
+      showUploadModal: false,
       isUploading: false,
+      uploadProgress: 0,
       uploadSuccess: false,
-      uploadError: true
-    })),
-  setFile: (file) => set(() => ({ file: file })),
-  updateProgress: (progress) => set(() => ({ uploadingProgress: progress })),
-  setIsUploading: (boolean) => set(() => ({ isUploading: boolean }))
+      uploadError: undefined,
+      fileUUID: undefined
+    }));
+  },
+  onStartUpload: () => {
+    set(() => ({ showUploadModal: true, isUploading: true }));
+  },
+  onUploadError: (msg) => {
+    set(() => ({ uploadError: msg, isUploading: false }));
+  },
+  onUploadProgressChange: (p) => {
+    set(() => ({ uploadProgress: p }));
+  },
+  onUploadSuccess: (resp) => {
+    set(() => ({
+      fileUUID: resp.uuid,
+      fileExpiry: new Date(resp.expires * 1000),
+      uploadSuccess: true,
+      isUploading: false
+    }));
+  }
 }));
 
 export default useFileStore;
@@ -58,18 +119,19 @@ export default useFileStore;
 export const useProcessFile = () => {
   const {
     setFile,
-    setIsUploading,
-    updateProgress,
-    onAbort,
-    onUploadSuccess,
-    onUploadError
+    setIsProcessing,
+    onProcessingProgressChange,
+    onProcessAbort,
+    onProcessSuccess,
+    onProcessError
   } = useFileStore();
 
   const readerRef = useRef<FileReader | null>(null);
 
   const abort = () => {
-    onAbort();
+    onProcessAbort();
     readerRef?.current?.abort();
+    readerRef.current = null;
   };
 
   const processFile = (file: File) => {
@@ -79,19 +141,19 @@ export const useProcessFile = () => {
     readerRef.current = new FileReader();
 
     readerRef.current.onloadend = () => {
-      onUploadSuccess(readerRef?.current?.result as string);
+      onProcessSuccess(readerRef?.current?.result as string);
     };
 
     readerRef.current.onprogress = (e) => {
       const percentage = Math.round((e.loaded * 100) / e.total);
-      updateProgress(percentage);
+      onProcessingProgressChange(percentage);
     };
 
     readerRef.current.onerror = () => {
-      onUploadError();
+      onProcessError();
     };
 
-    setIsUploading(true);
+    setIsProcessing(true);
     readerRef.current?.readAsDataURL(file);
   };
 
