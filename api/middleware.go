@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/fatih/color"
+	"github.com/rs/cors"
 )
 
 func makeAuthMiddleware() func(http.Handler) http.Handler {
@@ -41,4 +42,22 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		color.Cyan("%s --- %s", r.Method, r.RequestURI)
 		next.ServeHTTP(w, r)
 	})
+}
+
+var c = cors.New(cors.Options{
+	AllowedOrigins:   []string{"*"},
+	AllowedHeaders:   []string{"Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token", "Authorization"},
+	AllowedMethods:   []string{"GET", "PATCH", "POST", "PUT", "OPTIONS", "DELETE"},
+	Debug:            true,
+	AllowCredentials: true,
+})
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return c.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	}))
 }

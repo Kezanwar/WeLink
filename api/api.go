@@ -101,13 +101,14 @@ func (s *APIServer) log_resp(code int, r *http.Request) {
 func (s *APIServer) serve() {
 	router := mux.NewRouter()
 
+	router.Use(corsMiddleware)
+	router.Use(loggingMiddleware)
+	router.Use(makeAuthMiddleware())
+
 	router.HandleFunc("/api/upload", s.make_json_handler(s.handle_upload_file))
 	router.HandleFunc("/api/file/meta/{uuid}", s.make_json_handler(s.handle_get_file_meta))
 	router.HandleFunc("/api/files/meta" /*?query*/, s.make_json_handler(s.handle_get_files_meta))
 	router.HandleFunc("/api/file/download/{uuid}", s.handle_download_file)
-
-	router.Use(loggingMiddleware)
-	router.Use(makeAuthMiddleware())
 
 	log.Println("WeLink api running on port", s.ListenAddr)
 
@@ -125,7 +126,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 
 	if r.Method == "POST" {
 
-		err := r.ParseMultipartForm(ONE_MB)
+		err := r.ParseMultipartForm(FIVE_HUNDRED_MB + ONE_MB)
 
 		if err != nil {
 			return http.StatusBadRequest, fmt.Errorf("failed to parse multipart form")
