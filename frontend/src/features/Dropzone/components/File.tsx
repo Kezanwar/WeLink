@@ -45,7 +45,7 @@ import {
 
 import { AiOutlineApple } from 'react-icons/ai';
 
-import ProgressBar from '@app/components/progress-bar';
+import ProgressBar from '@app/components/ProgressBar';
 import useFileStore from '@app/stores/file';
 import cc from '@app/util/cc';
 import formatBytes from '@app/util/format-bytes';
@@ -125,7 +125,7 @@ const File = () => {
       <div
         className={cc([
           'h-full w-full flex flex-col items-center justify-center ',
-          isProcessing && 'opacity-50'
+          isProcessing && 'opacity-30'
         ])}
       >
         <FileIcon ext={ext} />

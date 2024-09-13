@@ -1,11 +1,10 @@
 import React from 'react';
 
 import { Link } from 'react-router-dom';
-import { PATH_HOME } from '../../../constants/paths';
 
 const Logo: React.FC = () => {
   return (
-    <Link to={PATH_HOME}>
+    <Link to={'/'}>
       <div></div>
       <h1 className="Logo text-3xl tracking-tighter font-extrabold dark:text-white">
         We

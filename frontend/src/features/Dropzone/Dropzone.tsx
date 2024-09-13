@@ -2,9 +2,9 @@ import React, { FC, useRef, useState } from 'react';
 import { IoMdClose } from 'react-icons/io';
 import { useDropArea } from 'react-use';
 import { IoMdLink } from 'react-icons/io';
-import SecondaryButton from '@app/components/buttons/SecondaryButton/SecondaryButton';
+import SecondaryButton from '@app/components/Buttons/SecondaryButton/SecondaryButton';
 import File from './components/File';
-import PrimaryButton from '@app/components/buttons/PrimaryButton';
+import PrimaryButton from '@app/components/Buttons/PrimaryButton';
 import UploadZone from './components/UploadZone';
 
 import useToastStore from '@app/stores/toast';
@@ -15,7 +15,7 @@ import useProcessFile from '@app/hooks/useProcessFile';
 import Request from '@app/services/request';
 
 import cc from '@app/util/cc';
-import UploadModal from './components/UploadModal';
+import UploadModal from '../UploadModal';
 
 const Dropzone: FC = () => {
   const {
@@ -25,7 +25,9 @@ const Dropzone: FC = () => {
     onStartUpload,
     onUploadProgressChange,
     onUploadError,
-    onUploadSuccess
+    onUploadSuccess,
+    isUploading,
+    fileUUID
   } = useFileStore();
   const { enqueueMessage } = useToastStore();
 
@@ -91,7 +93,7 @@ const Dropzone: FC = () => {
       <button
         onClick={onUploadAreaClick}
         className={cc([
-          'mt-4 group transition-all  w-96 h-80 rounded-2xl flex flex-col justify-center items-center gap-4',
+          'mt-20 md:mt-4 group transition-all h-30  md:w-96 md:h-80 rounded-2xl flex flex-col justify-center items-center gap-4',
           (isProcessing || file) && 'pointer-events-none'
         ])}
         {...bond}
@@ -99,7 +101,7 @@ const Dropzone: FC = () => {
         {!file ? <UploadZone over={state.over} /> : <File />}
       </button>
       {processSuccess && !!file && (
-        <div className="flex items-center gap-8">
+        <div className="mt-auto mb-6 flex items-center gap-8">
           <SecondaryButton
             onClick={abort}
             className="mt-4 text-red-500"

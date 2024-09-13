@@ -1,7 +1,7 @@
 import React from 'react';
 
-import { Logo } from '@app/components/elements/Logo';
-import { ThemeToggle } from '@app/components/buttons/ThemeToggle';
+import { Logo } from '@app/components/Elements/Logo';
+import { ThemeToggle } from '@app/components/Buttons/ThemeToggle';
 import { SearchButton } from '../../buttons/SearchButton';
 
 const Header: React.FC = (props) => {

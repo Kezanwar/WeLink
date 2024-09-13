@@ -14,7 +14,9 @@ export type SuccessfulFileUploadResponse = {
 };
 
 class Request {
-  static BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
+  static API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL;
+
+  static FE_BASE_URL: string = import.meta.env.VITE_FE_BASE_URL;
 
   static axios: AxiosInstance;
 
@@ -22,7 +24,7 @@ class Request {
 
   static init() {
     this.axios = axios.create({
-      baseURL: Request.BASE_URL,
+      baseURL: Request.API_BASE_URL,
       headers: {
         'Content-Type': 'application/json'
       }
@@ -69,6 +71,7 @@ class Request {
     return this.axios.get(`/files/meta/${uuid}`);
   }
 
+  /*narrows unknown error to a useable error*/
   static errorHandler(
     error: unknown,
     onError: (errorObj: ErrorObject) => void

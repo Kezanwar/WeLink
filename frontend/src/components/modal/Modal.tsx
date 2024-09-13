@@ -1,7 +1,7 @@
 import { FC, ReactNode } from 'react';
 import { motion } from 'framer-motion';
 
-import SecondaryButton from '../buttons/SecondaryButton/SecondaryButton';
+import SecondaryButton from '../Buttons/SecondaryButton/SecondaryButton';
 
 export type ModalProps = {
   onClose: () => void;
@@ -19,7 +19,7 @@ const Modal: FC<ModalProps> = ({ onClose, showCancel, children }) => {
   return (
     <motion.div
       onClick={onClose}
-      className="bg-gray-800/70 dark:bg-white/20 top-0 fixed h-full w-full flex justify-center items-center"
+      className="bg-gray-800/70 dark:bg-white/10 top-0 fixed h-full w-full flex justify-center items-center"
       initial={initial}
       animate={animated}
     >
@@ -27,12 +27,16 @@ const Modal: FC<ModalProps> = ({ onClose, showCancel, children }) => {
         onClick={(e) => {
           e.stopPropagation();
         }}
-        className="w-[500px] max-w-[100vw] px-6 py-8 bg-white dark:bg-black shadow-xl rounded-xl flex flex-col items-center gap-8 text-center"
+        className="w-[500px] max-w-[90vw] px-6 py-8 bg-white dark:bg-black shadow-xl rounded-xl flex flex-col items-center gap-8 text-center"
       >
         {children}
         <div className="flex items-center gap-4">
           {showCancel && (
-            <SecondaryButton onClick={handleCancelClick} text="Done" />
+            <SecondaryButton
+              className="dark:text-white"
+              onClick={handleCancelClick}
+              text="Done"
+            />
           )}
         </div>
       </div>

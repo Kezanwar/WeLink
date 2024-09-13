@@ -33,7 +33,7 @@ interface FileStore {
   onUploadProgressChange: (progress: number) => void;
 }
 
-const useFileStore = create<FileStore>()((set) => ({
+const useFileStore = create<FileStore>()((set, get) => ({
   file: undefined,
   setFile: (file) => set(() => ({ file: file })),
 
@@ -86,6 +86,9 @@ const useFileStore = create<FileStore>()((set) => ({
   fileUUID: undefined,
   fileExpiry: undefined,
   closeUploadModal: () => {
+    if (get().isUploading) {
+      return;
+    }
     set(() => ({
       showUploadModal: false,
       isUploading: false,
@@ -105,6 +108,7 @@ const useFileStore = create<FileStore>()((set) => ({
     set(() => ({ uploadProgress: p }));
   },
   onUploadSuccess: (resp) => {
+    console.log(resp.uuid);
     set(() => ({
       fileUUID: resp.uuid,
       fileExpiry: new Date(resp.expires * 1000),

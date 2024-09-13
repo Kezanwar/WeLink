@@ -9,7 +9,7 @@ const SecondaryButton: FC<Props> = ({ onClick, text, icon, className }) => {
   return (
     <button
       onClick={onClick}
-      className={`hover:scale-105 active:scale-90 font-semibold text-sm transition-transform flex gap-1  rounded-full items-center  ${className}`}
+      className={`active:scale-90 hover:opacity-70 font-semibold text-sm transition-all flex gap-1  rounded-full items-center  ${className}`}
     >
       {text} {icon && icon}
     </button>

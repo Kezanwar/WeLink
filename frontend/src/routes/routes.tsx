@@ -5,15 +5,12 @@ import { AnimatePresence } from 'framer-motion';
 // pages
 import Home from '@app/pages/Home';
 
-// config
-import { PATH_HOME, PATH_SEARCH } from '@app/constants/paths';
-
 // ----------------------------------------------------------------------
 
 const Router: React.FC = () => {
   const elements = useRoutes([
     {
-      path: PATH_HOME,
+      path: '/',
       element: <Home />
     },
 
