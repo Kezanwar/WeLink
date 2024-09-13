@@ -6,10 +6,10 @@ import (
 
 func main() {
 
-	redisErr := Redis.connect()
+	err := Redis.connect()
 
-	if redisErr != nil {
-		log.Fatal(redisErr)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	Api.serve()
