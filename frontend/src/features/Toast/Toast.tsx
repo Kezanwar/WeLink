@@ -21,15 +21,15 @@ const Toast: FC = () => {
   const { messages } = useToastStore();
 
   return (
-    <div className="fixed top-5 right-5 ">
-      <AnimatePresence mode="wait">
+    <div className="fixed bottom-5 right-5 flex flex-col gap-4">
+      <AnimatePresence>
         {messages.map((msg) => (
           <motion.div
             initial={initial}
             animate={animated}
             exit={exit}
             transition={spring}
-            className={`px-3 py-3 text-sm rounded-md  bg-white text-black shadow-lg flex items-start gap-2 font-semi-bold`}
+            className={`px-3 py-3 text-sm rounded-md  bg-white text-black shadow-xl flex items-start gap-2 font-semi-bold`}
             key={msg.uuid}
           >
             <div className={`rounded-full p-1 ${col_map[msg.type]}`}>

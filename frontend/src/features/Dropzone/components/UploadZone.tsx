@@ -6,9 +6,9 @@ type Props = { over: boolean };
 const UploadZone: FC<Props> = ({ over }) => {
   const text_color = useMemo(() => {
     if (over) {
-      return 'text-yellow-400 dark:text-yellow-400';
+      return 'text-red-400 dark:text-red-400';
     }
-    return 'text-gray-300 dark:text-gray-700 group-hover:text-yellow-400 group-hover:dark:text-yellow-400';
+    return 'text-gray-300 dark:text-gray-700 group-hover:text-red-400 group-hover:dark:text-red-400';
   }, [over]);
   return (
     <div

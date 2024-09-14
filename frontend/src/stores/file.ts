@@ -1,6 +1,6 @@
-import { SuccessfulFileUploadResponse } from '@app/services/request';
-import { useRef } from 'react';
 import { create } from 'zustand';
+import { FileMeta } from './links';
+import formatDate from '@app/util/format-date';
 
 interface FileStore {
   file?: File;
@@ -22,13 +22,13 @@ interface FileStore {
   showUploadModal: boolean;
   isUploading: boolean;
   uploadProgress: number;
-  fileUUID: string | undefined;
-  fileExpiry: Date | undefined;
+  fileUUID?: string;
+  fileExpiry?: string;
   uploadSuccess: boolean;
   uploadError: string | undefined;
   closeUploadModal: () => void;
   onStartUpload: () => void;
-  onUploadSuccess: (response: SuccessfulFileUploadResponse) => void;
+  onUploadSuccess: (fileMeta: FileMeta) => void;
   onUploadError: (msg: string) => void;
   onUploadProgressChange: (progress: number) => void;
 }
@@ -108,10 +108,9 @@ const useFileStore = create<FileStore>()((set, get) => ({
     set(() => ({ uploadProgress: p }));
   },
   onUploadSuccess: (resp) => {
-    console.log(resp.uuid);
     set(() => ({
       fileUUID: resp.uuid,
-      fileExpiry: new Date(resp.expires * 1000),
+      fileExpiry: formatDate(resp.expires),
       uploadSuccess: true,
       isUploading: false
     }));

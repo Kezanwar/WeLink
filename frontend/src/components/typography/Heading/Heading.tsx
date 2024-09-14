@@ -1,13 +1,14 @@
 import React, { ReactNode } from 'react';
 
 type Props = {
-  variant: 'md' | 'lg';
+  variant: 'md' | 'lg' | 'sm';
   className?: string;
   children: ReactNode;
 };
 
 const styles = {
   md: '__black-and-white font-semi-bold text-2xl  md:text-3xl',
+  sm: '__black-and-white font-semi-bold text-lg  md:text-lg',
   lg: '__black-and-white font-semi-bold tracking-tighter text-2xl md:text-4xl'
 };
 

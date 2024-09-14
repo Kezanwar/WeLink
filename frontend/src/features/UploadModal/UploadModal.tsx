@@ -9,6 +9,7 @@ import CopyLink from '@app/components/CopyLink';
 
 import { ErrorIcon, SuccessIcon, UploadingIcon } from './components/Icons';
 import Request from '@app/services/request';
+import { Heading } from '@app/components/Typography/Heading';
 
 const icon_map = {
   success: <SuccessIcon />,
@@ -46,27 +47,24 @@ const UploadModal: FC = () => {
     <Modal onClose={closeUploadModal} showCancel={true}>
       {icon_map[state]}
       <div className="flex flex-col items-center justify-center w-full">
-        <h3 className="font-sm mb-2 dark:text-white text-lg">
+        <Heading
+          variant="sm"
+          className="md:text-2xl font-bold mb-2 dark:text-white text-lg"
+        >
           {title_map[state]}
-        </h3>
+        </Heading>
 
         <p className="font-normal text-sm text-gray-400 dark:text-gray-500 mb-4">
           {uploadError && capitalizeWord(uploadError)}
           {isUploading &&
             (uploadProgress < 60 ? 'This shoudnt take long' : 'Almost done')}
-          {hasLink && `You link will expire on ${fileExpiry.toDateString()}`}
+          {hasLink && `Expires on ${fileExpiry}`}
         </p>
-        {isUploading && (
-          <div className="min-h-[20px] ">
-            <ProgressBar progress={uploadProgress} />
-            {/* <ProgressBar progress={20} /> */}
-          </div>
-        )}
-        {hasLink && (
-          <div className="min-h-[20px] w-full">
-            <CopyLink link={link} />
-          </div>
-        )}
+
+        <div className={`min-h-[20px] ${hasLink ? 'w-full' : ''}`}>
+          {isUploading && <ProgressBar progress={uploadProgress} />}
+          {hasLink && <CopyLink className="w-[90%] m-auto" link={link} />}
+        </div>
       </div>
     </Modal>
   );

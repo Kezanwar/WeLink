@@ -1,21 +1,23 @@
-import React, { FC, useRef, useState } from 'react';
+import React, { FC, useEffect, useRef } from 'react';
 import { IoMdClose } from 'react-icons/io';
 import { useDropArea } from 'react-use';
 import { IoMdLink } from 'react-icons/io';
+
 import SecondaryButton from '@app/components/Buttons/SecondaryButton/SecondaryButton';
-import File from './components/File';
 import PrimaryButton from '@app/components/Buttons/PrimaryButton';
 import UploadZone from './components/UploadZone';
+import UploadModal from '../UploadModal';
+import File from './components/File';
 
-import useToastStore from '@app/stores/toast';
 import useFileStore from '@app/stores/file';
+import useLinksStore from '@app/stores/links';
 
 import useProcessFile from '@app/hooks/useProcessFile';
 
 import Request from '@app/services/request';
 
 import cc from '@app/util/cc';
-import UploadModal from '../UploadModal';
+import useToastStore from '@app/stores/toast';
 
 const Dropzone: FC = () => {
   const {
@@ -25,13 +27,20 @@ const Dropzone: FC = () => {
     onStartUpload,
     onUploadProgressChange,
     onUploadError,
-    onUploadSuccess,
-    isUploading,
-    fileUUID
+    onUploadSuccess
   } = useFileStore();
-  const { enqueueMessage } = useToastStore();
 
   const { processFile, abort } = useProcessFile();
+
+  const { enqueueMessage } = useToastStore();
+
+  const { add, exists } = useLinksStore();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const onUploadAreaClick = () => {
+    fileInputRef?.current?.click();
+  };
 
   const [bond, state] = useDropArea({
     onFiles: async (files) => {
@@ -58,8 +67,15 @@ const Dropzone: FC = () => {
   };
 
   const handleGetLink = async () => {
-    // enqueueMessage({ text: 'test', type: 'success' });
     if (!file) {
+      return;
+    }
+
+    if (exists(file.name)) {
+      enqueueMessage({
+        text: "You've already created an active link to this file",
+        type: 'error'
+      });
       return;
     }
 
@@ -69,6 +85,7 @@ const Dropzone: FC = () => {
         onUploadProgressChange(ev.progress ? Math.round(ev.progress * 100) : 0)
       );
       onUploadSuccess(res.data);
+      add(res.data);
     } catch (error) {
       Request.errorHandler(error, (err) => {
         onUploadError(err.message);
@@ -76,11 +93,10 @@ const Dropzone: FC = () => {
     }
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const onUploadAreaClick = () => {
-    fileInputRef?.current?.click();
-  };
+  useEffect(() => {
+    return () => abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
@@ -93,7 +109,7 @@ const Dropzone: FC = () => {
       <button
         onClick={onUploadAreaClick}
         className={cc([
-          'mt-20 md:mt-4 group transition-all h-30  md:w-96 md:h-80 rounded-2xl flex flex-col justify-center items-center gap-4',
+          'mt-8 md:mt-4 group transition-all h-40  md:w-96 md:h-64 rounded-2xl flex flex-col justify-center items-center gap-4',
           (isProcessing || file) && 'pointer-events-none'
         ])}
         {...bond}
@@ -101,12 +117,12 @@ const Dropzone: FC = () => {
         {!file ? <UploadZone over={state.over} /> : <File />}
       </button>
       {processSuccess && !!file && (
-        <div className="mt-auto mb-6 flex items-center gap-8">
+        <div className="mt-4 md:mt-0 mb-6 flex items-center gap-8">
           <SecondaryButton
             onClick={abort}
             className="mt-4 text-red-500"
             text="Clear"
-            icon={<IoMdClose size={20} />}
+            endIcon={<IoMdClose size={20} />}
           />
           <PrimaryButton
             text="Get Link"

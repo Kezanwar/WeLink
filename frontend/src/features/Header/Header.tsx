@@ -2,15 +2,15 @@ import React from 'react';
 
 import { Logo } from '@app/components/Elements/Logo';
 import { ThemeToggle } from '@app/components/Buttons/ThemeToggle';
-import { SearchButton } from '../../buttons/SearchButton';
+import LinksButton from '@app/components/Buttons/LinksButton';
 
 const Header: React.FC = (props) => {
   return (
     <header className="header">
       <div className="is-container  flex justify-between items-center mb-4 py-4 ">
         <Logo />
-        <div className="flex items-center gap-3">
-          {/* <SearchButton /> */}
+        <div className="flex items-center gap-2">
+          <LinksButton />
           <ThemeToggle />
         </div>
       </div>

@@ -4,6 +4,8 @@ import { AnimatePresence } from 'framer-motion';
 
 // pages
 import Home from '@app/pages/Home';
+import Links from '@app/pages/Links';
+import File from '@app/pages/File';
 
 // ----------------------------------------------------------------------
 
@@ -13,8 +15,8 @@ const Router: React.FC = () => {
       path: '/',
       element: <Home />
     },
-
-    { path: '*', element: <Home /> }
+    { path: '/links', element: <Links /> },
+    { path: '/file/:uuid', element: <File /> }
   ]);
   const location = useLocation();
   if (!elements) return null;

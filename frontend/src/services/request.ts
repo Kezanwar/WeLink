@@ -1,3 +1,4 @@
+import { FileMeta } from '@app/stores/links';
 import formatBytes from '@app/util/format-bytes';
 import axios, { AxiosError, AxiosInstance, AxiosProgressEvent } from 'axios';
 
@@ -51,7 +52,7 @@ class Request {
 
   static postFile(file: File, onProgress: OnProgress) {
     const formData = this.getFormDataFromFile(file);
-    return this.axios.post<SuccessfulFileUploadResponse>('/upload', formData, {
+    return this.axios.post<FileMeta>('/upload', formData, {
       onUploadProgress: onProgress,
       headers: { 'Content-Type': 'multipart/form-data' }
     });

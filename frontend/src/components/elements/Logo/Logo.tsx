@@ -8,7 +8,7 @@ const Logo: React.FC = () => {
       <div></div>
       <h1 className="Logo text-3xl tracking-tighter font-extrabold dark:text-white">
         We
-        <span className="logo-gradient">Link</span>
+        <span className="text-red-400">Link</span>
       </h1>
     </Link>
   );

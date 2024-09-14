@@ -24,11 +24,11 @@ const useToastStore = create<ToastStore>()((set, get) => ({
     get().add(msg, uuid);
     setTimeout(() => {
       get().remove(uuid);
-    }, 3000);
+    }, 4000);
   },
   add: (msg: Message, uuid: string) =>
     set((state) => {
-      if (state.messages.find((msg) => msg.text === msg.text)) {
+      if (state.messages.find((m) => m.text === msg.text)) {
         return state;
       } else {
         const newMsg: MessageInternal = { ...msg, uuid };
