@@ -115,11 +115,6 @@ func (s *APIServer) serve() {
 
 }
 
-type SuccessfulUploadResponse struct {
-	*FileMeta
-	Expires int64 `json:"expires"`
-}
-
 func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (int, error) {
 	defer r.Body.Close()
 
@@ -161,6 +156,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 			FormattedSize: formatted_size,
 			Size:          size,
 			UUID:          uuid,
+			Expires:       File.make_one_day_expiry_unix(),
 		}
 
 		err = Redis.set_file_binary(uuid, bytes)
@@ -176,19 +172,12 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 			return http.StatusBadRequest, fmt.Errorf("failed to save file meta")
 		}
 
-		response := &SuccessfulUploadResponse{
-			FileMeta: meta,
-			Expires:  File.make_one_day_expiry_unix(),
-		}
-
-		return s.NilError, s.write_json(w, r, http.StatusOK, response)
+		return s.NilError, s.write_json(w, r, http.StatusOK, meta)
 	} else {
 		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
 
 }
-
-type SuccessfulFileMetaReponse = FileMeta
 
 func (s *APIServer) handle_get_file_meta(w http.ResponseWriter, r *http.Request) (int, error) {
 	defer r.Body.Close()

@@ -32,6 +32,7 @@ type FileMeta struct {
 	FormattedSize string `json:"formatted_size"`
 	Size          int64  `json:"size"`
 	UUID          string `json:"uuid"`
+	Expires       int64  `json:expires`
 }
 
 var File = &FileService{}
