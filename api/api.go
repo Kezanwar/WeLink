@@ -116,8 +116,8 @@ func (s *APIServer) serve() {
 }
 
 type SuccessfulUploadResponse struct {
-	UUID    string `json:"uuid"`
-	Expires int64  `json:"expires"`
+	*FileMeta
+	Expires int64 `json:"expires"`
 }
 
 func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (int, error) {
@@ -177,8 +177,8 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 		}
 
 		response := &SuccessfulUploadResponse{
-			UUID:    uuid,
-			Expires: File.make_one_day_expiry_unix(),
+			FileMeta: meta,
+			Expires:  File.make_one_day_expiry_unix(),
 		}
 
 		return s.NilError, s.write_json(w, r, http.StatusOK, response)
