@@ -17,23 +17,23 @@ const LinksButton: React.FC = () => {
   const path = '/links';
   const isSearch = location.pathname === path;
   return (
-    <div
-      className={`relative  ${
-        isSearch ? active : inactive
-      } p-2 active:scale-75 transition-all`}
-    >
-      <Link to={path}>
+    <Link to={path}>
+      <div
+        className={`relative  ${
+          isSearch ? active : inactive
+        } p-2 active:scale-75 transition-all`}
+      >
         <LuLink style={iconStyles} />
-      </Link>
 
-      {files.length > 0 && (
-        <div
-          className={`pointer-events-none  absolute text-[9px] top-[-4px] w-[18px]  h-[18px] flex items-center justify-center  border-white bg-red-400 border-2 dark:border-black font-bold text-white rounded-full right-[-1px]`}
-        >
-          {files.length}
-        </div>
-      )}
-    </div>
+        {files.length > 0 && (
+          <div
+            className={`pointer-events-none  absolute text-[9px] top-[-4px] w-[18px]  h-[18px] flex items-center justify-center  border-white bg-red-400 border-2 dark:border-black font-bold text-white rounded-full right-[-1px]`}
+          >
+            {files.length}
+          </div>
+        )}
+      </div>
+    </Link>
   );
 };
 

@@ -17,6 +17,7 @@ interface LinksStore {
   files: FileMeta[];
   prune: () => void;
   add: (fileMeta: FileMeta) => void;
+  remove: (uuid: string) => void;
   exists: (name: string) => boolean;
 }
 
@@ -41,6 +42,11 @@ const useLinksStore = create<LinksStore>()(
       },
       exists: (name) => {
         return !!get().files.find((f) => f.name === name);
+      },
+      remove: (uuid) => {
+        set((state) => {
+          return { files: state.files.filter((f) => f.uuid !== uuid) };
+        });
       }
     }),
     {

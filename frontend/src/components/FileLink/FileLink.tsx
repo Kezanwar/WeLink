@@ -1,4 +1,4 @@
-import { FC, memo } from 'react';
+import { FC, memo, useState } from 'react';
 
 import FileIcon from '@app/components/FileIcon';
 import { Extension } from '@app/components/FileIcon/FileIcon';
@@ -6,15 +6,16 @@ import { Heading } from '@app/components/Typography/Heading';
 import { BodyText } from '@app/components/Typography/BodyText';
 import Subheading from '@app/components/Typography/Subheading';
 
-import { FileMeta } from '@app/stores/links';
+import useLinksStore, { FileMeta } from '@app/stores/links';
 import formatDate from '@app/util/format-date';
-import CopyLink from '../CopyLink';
-import PrimaryButton from '../Buttons/PrimaryButton';
+
 import SecondaryButton from '../Buttons/SecondaryButton/SecondaryButton';
 import { MdCopyAll } from 'react-icons/md';
 import { useCopyToClipboard } from 'react-use';
 import useToastStore from '@app/stores/toast';
-import Request from '@app/services/request';
+import Request, { ErrorObject } from '@app/services/request';
+import { IoMdClose } from 'react-icons/io';
+import Spinner from '../Spinner';
 
 type Props = {
   meta: FileMeta;
@@ -22,7 +23,12 @@ type Props = {
 
 const FileLink: FC<Props> = memo(({ meta }) => {
   const { enqueueMessage } = useToastStore();
-  const [state, copyToClipboard] = useCopyToClipboard();
+  const { remove } = useLinksStore();
+  const [_, copyToClipboard] = useCopyToClipboard();
+
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
+  const [deleteError, setDeleteError] = useState<ErrorObject | null>(null);
+
   const textArr = meta.name.split('.');
   const ext = textArr[textArr.length - 1] as Extension;
   const expires = formatDate(meta.expires);
@@ -35,6 +41,24 @@ const FileLink: FC<Props> = memo(({ meta }) => {
       text: 'Link copied and ready to share 👍🏾',
       type: 'success'
     });
+  };
+
+  const onRemove = async () => {
+    try {
+      setDeleteLoading(true);
+      await Request.deleteFile(meta.uuid);
+      enqueueMessage({
+        text: `${meta.name} deleted ❌`,
+        type: 'success'
+      });
+      remove(meta.uuid);
+    } catch (error) {
+      Request.errorHandler(error, (err) => {
+        setDeleteError(err);
+      });
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   return (
@@ -62,12 +86,21 @@ const FileLink: FC<Props> = memo(({ meta }) => {
               <BodyText>{expires}</BodyText>
             </div>
           </div>
-          <SecondaryButton
-            onClick={onCopy}
-            className=" text-black dark:text-white"
-            startIcon={<MdCopyAll size={20} />}
-            text="Copy"
-          />
+          <div className="flex items-center gap-3">
+            <SecondaryButton
+              onClick={onCopy}
+              className=" text-black dark:text-white"
+              startIcon={<MdCopyAll size={20} />}
+              text="Copy"
+            />
+            <SecondaryButton
+              onClick={onRemove}
+              className=" text-red-600 darl:text-red-100"
+              startIcon={<IoMdClose size={20} />}
+              text="Delete"
+            />
+            {deleteLoading && <Spinner size="sm" />}
+          </div>
         </div>
       </div>
     </div>

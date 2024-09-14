@@ -78,6 +78,10 @@ class Request {
     return this.axios.get<FileMeta>(`/file/meta/${uuid}`);
   }
 
+  static deleteFile(uuid: string) {
+    return this.axios.delete(`/file/delete/${uuid}`);
+  }
+
   /*narrows unknown error to a useable error*/
   static errorHandler(
     error: unknown,

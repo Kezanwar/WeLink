@@ -35,7 +35,7 @@ const Toast: FC = () => {
             <div className={`rounded-full p-1 ${col_map[msg.type]}`}>
               {icon_map[msg.type]}
             </div>
-            <p className="max-w-[240px] font-medium">{msg.text}</p>
+            <p className="max-w-[280px] font-medium">{msg.text}</p>
           </motion.div>
         ))}
       </AnimatePresence>

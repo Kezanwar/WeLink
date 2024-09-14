@@ -73,7 +73,7 @@ const Dropzone: FC = () => {
 
     if (exists(file.name)) {
       enqueueMessage({
-        text: "You've already created an active link to this file",
+        text: `You've already created an active link for ${file.name}`,
         type: 'error'
       });
       return;
@@ -86,6 +86,10 @@ const Dropzone: FC = () => {
       );
       onUploadSuccess(res.data);
       add(res.data);
+      enqueueMessage({
+        text: `Link for ${file.name} created successfully 🚀`,
+        type: 'success'
+      });
     } catch (error) {
       Request.errorHandler(error, (err) => {
         onUploadError(err.message);
