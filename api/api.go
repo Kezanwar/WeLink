@@ -20,7 +20,7 @@ type APIServer struct {
 
 type ApiHandler func(http.ResponseWriter, *http.Request) (int, error)
 
-type ApiErrorResponse struct {
+type EmptyResponse struct {
 	Message string `json:"message"`
 }
 
@@ -45,7 +45,7 @@ func (s *APIServer) make_json_handler(f ApiHandler) http.HandlerFunc {
 			if code != s.NilError {
 				c = code
 			}
-			s.write_json(w, r, c, ApiErrorResponse{Message: err.Error()})
+			s.write_json(w, r, c, EmptyResponse{Message: err.Error()})
 		}
 
 	}
@@ -107,6 +107,7 @@ func (s *APIServer) serve() {
 	router.HandleFunc("/api/upload", s.make_json_handler(s.handle_upload_file))
 	router.HandleFunc("/api/file/meta/{uuid}", s.make_json_handler(s.handle_get_file_meta))
 	router.HandleFunc("/api/files/meta" /*?query*/, s.make_json_handler(s.handle_get_files_meta))
+	router.HandleFunc("/api/file/delete/{uuid}", s.make_json_handler(s.handle_delete_file))
 	router.HandleFunc("/api/file/download/{uuid}", s.handle_download_file)
 
 	log.Println("WeLink api running on port", s.ListenAddr)
@@ -238,21 +239,21 @@ func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request)
 		uuid, err := s.get_uuid(r)
 
 		if err != nil {
-			s.write_json(w, r, http.StatusBadRequest, ApiErrorResponse{Message: err.Error()})
+			s.write_json(w, r, http.StatusBadRequest, EmptyResponse{Message: err.Error()})
 			return
 		}
 
 		fileBytes, fileErr := Redis.get_file_binary(uuid)
 
 		if fileErr != nil {
-			s.write_json(w, r, http.StatusBadRequest, ApiErrorResponse{Message: fileErr.Error()})
+			s.write_json(w, r, http.StatusBadRequest, EmptyResponse{Message: fileErr.Error()})
 			return
 		}
 
 		fileMeta, metaErr := Redis.get_file_meta(uuid)
 
 		if metaErr != nil {
-			s.write_json(w, r, http.StatusBadRequest, ApiErrorResponse{Message: metaErr.Error()})
+			s.write_json(w, r, http.StatusBadRequest, EmptyResponse{Message: metaErr.Error()})
 			return
 		}
 
@@ -260,11 +261,33 @@ func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", fileMeta.Name))
 
 		if _, err := w.Write(fileBytes); err != nil {
-			s.write_json(w, r, http.StatusBadRequest, ApiErrorResponse{Message: "failed to write file to response"})
+			s.write_json(w, r, http.StatusBadRequest, EmptyResponse{Message: "failed to write file to response"})
 			return
 		} else {
 			s.log_resp(http.StatusAccepted, r)
 		}
 
+	}
+}
+
+func (s *APIServer) handle_delete_file(w http.ResponseWriter, r *http.Request) (int, error) {
+	defer r.Body.Close()
+
+	if r.Method == "DELETE" {
+		uuid, err := s.get_uuid(r)
+
+		if err != nil {
+			return http.StatusBadRequest, err
+		}
+
+		err = Redis.delete_file(uuid)
+
+		if err != nil {
+			return http.StatusNotFound, err
+		}
+
+		return s.NilError, s.write_json(w, r, http.StatusOK, &EmptyResponse{Message: "file deleted successfully"})
+	} else {
+		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
 }

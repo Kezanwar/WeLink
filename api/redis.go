@@ -170,3 +170,19 @@ func (r *RedisClient) delete_file_meta(uuid string) error {
 
 	return nil
 }
+
+func (r *RedisClient) delete_file(uuid string) error {
+	err := r.delete_file_meta(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	err = r.delete_file_binary(uuid)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
