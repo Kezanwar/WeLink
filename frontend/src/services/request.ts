@@ -1,10 +1,15 @@
 import { FileMeta } from '@app/stores/links';
+import { capitalizeWord } from '@app/util/capitalize-word';
 import formatBytes from '@app/util/format-bytes';
 import axios, { AxiosError, AxiosInstance, AxiosProgressEvent } from 'axios';
 
-type ErrorObject = {
+export type ErrorObject = {
   message: string;
   statusCode: number;
+};
+
+type APIErrorResp = {
+  message: string;
 };
 
 type OnProgress = (progress: AxiosProgressEvent) => void;
@@ -33,12 +38,13 @@ class Request {
 
     this.axios.interceptors.response.use(
       (response) => response,
-      (error: AxiosError) => {
-        const err = error?.response?.data || {
-          message: this.genericErrMsg,
-          statusCode: 500
+      (error: AxiosError<APIErrorResp>) => {
+        const m = error?.response?.data?.message || this.genericErrMsg;
+        const err = {
+          message: capitalizeWord(m),
+          statusCode: error.response?.status
         };
-        return Promise.reject(err);
+        return Promise.reject(err as ErrorObject);
       }
     );
   }
@@ -69,7 +75,7 @@ class Request {
   }
 
   static getFileMeta(uuid: string) {
-    return this.axios.get(`/files/meta/${uuid}`);
+    return this.axios.get<FileMeta>(`/file/meta/${uuid}`);
   }
 
   /*narrows unknown error to a useable error*/
