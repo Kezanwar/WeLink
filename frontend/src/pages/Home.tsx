@@ -13,10 +13,10 @@ const TitleSection: React.FC = () => {
       <BodyText className="max-w-[420px] mb-3">
         All file types are accepted,{' '}
         <span className="text-black dark:text-white">
-          for large files OR folders you must compress it into a .zip first
-        </span>
+          for large files OR folders you must compress it into a .zip first.
+        </span>{' '}
+        (Max 2GB)
       </BodyText>
-      <BodyText className="mb-3 text-[12px]">(Max 500mb)</BodyText>
     </div>
   );
 };
