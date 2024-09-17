@@ -14,7 +14,7 @@ const ThemeRoot: React.FC<Props> = ({ children }) => {
         className={`min-h-[100vh] ${
           mode !== 'dark'
             ? 'bg-gradient-to-r from-rose-50/40 via-purple-50/40 to-blue-50/40'
-            : 'dark:bg-gray-950'
+            : 'dark:bg-black'
         }    `}
       >
         {children}

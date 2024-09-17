@@ -30,12 +30,12 @@ const Links: FC = () => {
       <div className="flex flex-col items-center gap-12 px-6">
         <TitleSection />
         <div className="md:pt-8 md:pb-20">
-          <div className="grid  md:grid-cols-2  relative">
-            <motion.div
-              layout
-              layoutRoot
-              className="hidden md:block absolute top-0  left-[50%] translate-x-[-50%] w-[1px] h-full bg-gray-200 dark:bg-gray-900"
-            />
+          <motion.div
+            layout
+            layoutRoot
+            className="grid  md:grid-cols-2  relative"
+          >
+            <div className="hidden md:block absolute top-0  left-[50%] translate-x-[-50%] w-[1px] h-full bg-gray-200 dark:bg-gray-900" />
 
             {files.map((f, i) => {
               const isLast = i === files.length - 1;
@@ -53,7 +53,7 @@ const Links: FC = () => {
                 </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       </div>
     </PageWrapper>
