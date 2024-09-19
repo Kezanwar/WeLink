@@ -27,11 +27,11 @@ var Redis = &RedisClient{
 	meta_suffix: "__META__",
 }
 
-var Address = os.Getenv("REDIS_URL")
+var RedisAddress = os.Getenv("REDIS_URL")
 
 func (r *RedisClient) connect() error {
 	r.rdb = redis.NewClient(&redis.Options{
-		Addr:     Address,
+		Addr:     RedisAddress,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})

@@ -86,3 +86,7 @@ func (f *FileService) write_tmp_file(bytes []byte, fileName string) {
 func (f *FileService) make_one_day_expiry_unix() int64 {
 	return time.Now().Add(ONE_DAY).Unix()
 }
+
+func (f *FileService) is_expired(meta *FileMeta) bool {
+	return meta.Expires < time.Now().Unix()
+}

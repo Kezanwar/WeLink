@@ -26,7 +26,7 @@ type EmptyResponse struct {
 
 var PORT = string(":") + os.Getenv("PORT")
 
-var Api = &APIServer{
+var API = &APIServer{
 	ListenAddr: PORT,
 	NilError:   0,
 }
@@ -68,7 +68,7 @@ func (s *APIServer) get_uuid(r *http.Request) (string, error) {
 	match := UUID.validate_uuid(uuidStr)
 
 	if !match {
-		return "", fmt.Errorf("not a valid uuid")
+		return "", fmt.Errorf("this file doesn't exist")
 	}
 
 	return uuidStr, nil
@@ -84,7 +84,7 @@ func (s *APIServer) get_uuids(r *http.Request) ([]string, error) {
 	are_valid := UUID.validate_uuids(uuids)
 
 	if !are_valid {
-		return nil, fmt.Errorf("invalid uuid passed")
+		return nil, fmt.Errorf("one of these files don't exist")
 	}
 
 	return uuids, nil
@@ -129,7 +129,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 
 		file, handler, err := r.FormFile("file")
 
-		if handler.Size > FIVE_HUNDRED_MB {
+		if handler.Size > TWO_GIG {
 			return http.StatusBadRequest, fmt.Errorf("file too large, limit is 500mb")
 		}
 
@@ -138,12 +138,6 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 		}
 
 		defer file.Close()
-
-		bytes, err := File.make_buffer_from_file(file)
-
-		if err != nil {
-			return http.StatusBadRequest, fmt.Errorf(err.Error())
-		}
 
 		name := handler.Filename
 		size := handler.Size
@@ -160,17 +154,17 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 			Expires:       File.make_one_day_expiry_unix(),
 		}
 
-		err = Redis.set_file_binary(uuid, bytes)
+		err = Redis.set_file_meta(uuid, meta)
 
 		if err != nil {
 			return http.StatusBadRequest, err
 		}
 
-		err = Redis.set_file_meta(uuid, meta)
+		err = AWS.store_file(uuid, file)
 
 		if err != nil {
-			Redis.delete_file_binary(uuid)
-			return http.StatusBadRequest, fmt.Errorf("failed to save file meta")
+			Redis.delete_file_meta(uuid)
+			return http.StatusBadRequest, fmt.Errorf("failed to save file")
 		}
 
 		return s.NilError, s.write_json(w, r, http.StatusOK, meta)
@@ -194,6 +188,12 @@ func (s *APIServer) handle_get_file_meta(w http.ResponseWriter, r *http.Request)
 
 		if metaErr != nil {
 			return http.StatusNotFound, metaErr
+		}
+
+		err = s.check_file_expiry(meta)
+
+		if err != nil {
+			return http.StatusGone, err
 		}
 
 		return s.NilError, s.write_json(w, r, http.StatusOK, meta)
@@ -243,17 +243,24 @@ func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		fileBytes, fileErr := Redis.get_file_binary(uuid)
-
-		if fileErr != nil {
-			s.write_json(w, r, http.StatusBadRequest, EmptyResponse{Message: fileErr.Error()})
-			return
-		}
-
 		fileMeta, metaErr := Redis.get_file_meta(uuid)
 
 		if metaErr != nil {
 			s.write_json(w, r, http.StatusBadRequest, EmptyResponse{Message: metaErr.Error()})
+			return
+		}
+
+		err = s.check_file_expiry(fileMeta)
+
+		if err != nil {
+			s.write_json(w, r, http.StatusGone, EmptyResponse{Message: err.Error()})
+			return
+		}
+
+		fileBytes, fileErr := AWS.get_file(uuid)
+
+		if fileErr != nil {
+			s.write_json(w, r, http.StatusBadRequest, EmptyResponse{Message: fileErr.Error()})
 			return
 		}
 
@@ -280,7 +287,13 @@ func (s *APIServer) handle_delete_file(w http.ResponseWriter, r *http.Request) (
 			return http.StatusBadRequest, err
 		}
 
-		err = Redis.delete_file(uuid)
+		err = Redis.delete_file_meta(uuid)
+
+		if err != nil {
+			return http.StatusNotFound, err
+		}
+
+		err = AWS.delete_file(uuid)
 
 		if err != nil {
 			return http.StatusNotFound, err
@@ -290,4 +303,24 @@ func (s *APIServer) handle_delete_file(w http.ResponseWriter, r *http.Request) (
 	} else {
 		return http.StatusBadRequest, fmt.Errorf("method not allow %s", r.Method)
 	}
+}
+
+func (s *APIServer) check_file_expiry(meta *FileMeta) error {
+	if File.is_expired(meta) {
+		err := Redis.delete_file_meta(meta.UUID)
+
+		if err != nil {
+			return fmt.Errorf("this file has expired, error deleting meta")
+		}
+
+		err = AWS.delete_file(meta.UUID)
+
+		if err != nil {
+			return fmt.Errorf("this file has expired, error deleting binary")
+		}
+
+		return fmt.Errorf("this file has expired")
+	}
+
+	return nil
 }
