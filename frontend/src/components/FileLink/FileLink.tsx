@@ -69,7 +69,7 @@ const FileLink: FC<Props> = memo(({ meta }) => {
 
       <div>
         <Heading
-          className="mb-2 font-medium lg:mb-1 leading-tight"
+          className="mb-2  font-medium lg:mb-1 leading-tight"
           variant="sm"
         >
           {meta.name}

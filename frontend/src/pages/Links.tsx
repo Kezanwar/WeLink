@@ -47,7 +47,7 @@ const Links: FC = () => {
                   layout
                   className={`${!isLast ? 'border-b' : ''} ${
                     isSecondLast ? 'border-b md:border-b-0' : ''
-                  } mx-2 md:mx-0 py-12 border-gray-200 dark:border-gray-800   px-4 lg:px-16 `}
+                  }  py-12 border-gray-200 dark:border-gray-800   md:px-6 lg:px-16 `}
                 >
                   <FileLink meta={f} />
                 </motion.div>

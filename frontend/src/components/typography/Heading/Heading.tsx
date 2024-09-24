@@ -8,7 +8,7 @@ type Props = {
 
 const styles = {
   md: '__black-and-white font-semi-bold text-2xl  md:text-3xl',
-  sm: '__black-and-white font-semi-bold text-lg  md:text-lg',
+  sm: '__black-and-white font-semi-bold text-md  md:text-lg',
   lg: '__black-and-white font-semi-bold tracking-tighter text-2xl md:text-4xl'
 };
 
