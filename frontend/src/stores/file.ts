@@ -31,6 +31,7 @@ interface FileStore {
   onUploadSuccess: (fileMeta: FileMeta) => void;
   onUploadError: (msg: string) => void;
   onUploadProgressChange: (progress: number) => void;
+  onUploadIntervalIncrement: () => void;
 }
 
 const useFileStore = create<FileStore>()((set, get) => ({
@@ -106,6 +107,9 @@ const useFileStore = create<FileStore>()((set, get) => ({
   },
   onUploadProgressChange: (p) => {
     set(() => ({ uploadProgress: p }));
+  },
+  onUploadIntervalIncrement: () => {
+    set(() => ({ uploadProgress: Math.min(get().uploadProgress + 1, 99) }));
   },
   onUploadSuccess: (resp) => {
     set(() => ({

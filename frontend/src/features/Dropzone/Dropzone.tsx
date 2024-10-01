@@ -26,6 +26,7 @@ const Dropzone: FC = () => {
     processSuccess,
     onStartUpload,
     onUploadProgressChange,
+    onUploadIntervalIncrement,
     onUploadError,
     onUploadSuccess
   } = useFileStore();
@@ -66,6 +67,8 @@ const Dropzone: FC = () => {
     }
   };
 
+  const interval = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const handleGetLink = async () => {
     if (!file) {
       return;
@@ -81,15 +84,31 @@ const Dropzone: FC = () => {
 
     try {
       onStartUpload();
-      const res = await Request.postFile(file, (ev) =>
-        onUploadProgressChange(ev.progress ? Math.round(ev.progress * 100) : 0)
-      );
-      onUploadSuccess(res.data);
-      add(res.data);
-      enqueueMessage({
-        text: `Link for ${file.name} created successfully 🚀`,
-        type: 'success'
+      const res = await Request.postFile(file, (ev) => {
+        if (ev.progress) {
+          const val = ev.progress * 100;
+          if (val > 0 && val < 64) {
+            onUploadProgressChange(Math.round(val));
+          } else {
+            if (!interval.current) {
+              interval.current = setInterval(onUploadIntervalIncrement, 600);
+            }
+          }
+        }
       });
+      if (interval.current) {
+        clearInterval(interval.current);
+        interval.current = null;
+      }
+      onUploadProgressChange(100);
+      setTimeout(() => {
+        onUploadSuccess(res.data);
+        add(res.data);
+        enqueueMessage({
+          text: `Link for ${file.name} created successfully 🚀`,
+          type: 'success'
+        });
+      }, 300);
     } catch (error) {
       Request.errorHandler(error, (err) => {
         onUploadError(err.message);
