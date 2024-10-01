@@ -5,14 +5,13 @@ import useFileStore from '@app/stores/file';
 import cc from '@app/util/cc';
 import formatBytes from '@app/util/format-bytes';
 import FileIcon, { Extension } from '@app/components/FileIcon/FileIcon';
+import getExt from '@app/util/get-ext';
 
 const File: FC = () => {
   const { file, isProcessing, processingProgress } = useFileStore();
 
   const ext: Extension = useMemo(() => {
-    const txtArr = file?.name.split('.');
-
-    return txtArr?.[txtArr.length - 1].toLowerCase() as Extension;
+    return file?.name ? getExt(file.name) : 'default';
   }, [file]);
 
   return file ? (

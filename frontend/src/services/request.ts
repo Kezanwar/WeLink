@@ -65,7 +65,8 @@ class Request {
   }
 
   static getFileBinary(uuid: string, onProgress: OnProgress) {
-    return this.axios.get(`/file/download/${uuid}`, {
+    return this.axios.get<string>(`/file/download/${uuid}`, {
+      responseType: 'arraybuffer',
       onDownloadProgress: onProgress
     });
   }

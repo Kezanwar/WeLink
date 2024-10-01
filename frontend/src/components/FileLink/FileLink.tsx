@@ -16,6 +16,7 @@ import useToastStore from '@app/stores/toast';
 import Request, { ErrorObject } from '@app/services/request';
 import { IoMdClose } from 'react-icons/io';
 import Spinner from '../Spinner';
+import getExt from '@app/util/get-ext';
 
 type Props = {
   meta: FileMeta;
@@ -29,8 +30,7 @@ const FileLink: FC<Props> = memo(({ meta }) => {
   const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
   const [deleteError, setDeleteError] = useState<ErrorObject | null>(null);
 
-  const textArr = meta.name.split('.');
-  const ext = textArr[textArr.length - 1] as Extension;
+  const ext = getExt(meta.name);
   const expires = formatDate(meta.expires);
 
   const link = `${Request.FE_BASE_URL}/file/${meta.uuid}`;
@@ -69,13 +69,13 @@ const FileLink: FC<Props> = memo(({ meta }) => {
 
       <div>
         <Heading
-          className="mb-2  font-medium lg:mb-1 leading-tight"
+          className="mb-3  font-medium lg:mb-1 leading-tight"
           variant="sm"
         >
           {meta.name}
         </Heading>
         <div className="flex flex-col max-w-max">
-          <div className="flex items-center mb-3 lg:mb-2 gap-4 lg:gap-3">
+          <div className="flex items-center mb-3 lg:mb-3 gap-4 lg:gap-3">
             <div>
               <Subheading variant="sm">Size</Subheading>
               <BodyText>{meta.formatted_size}</BodyText>
