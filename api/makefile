@@ -1,12 +1,12 @@
 build: 
-	@go build -o bin/bank-api
+	@go build -o bin/we-link-api
 
 run:
-	@./bin/bank-api
+	@./bin/we-link-api
 
 dev: 	
-	@go build -o bin/bank-api
-	@./bin/bank-api
+	@go build -o bin/we-link-api
+	@./bin/we-link-api
 
 create-redis:
 	@docker run -p 6379:6379 --name we-link-redis -d -it redis/redis-stack-server:latest
