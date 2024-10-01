@@ -184,7 +184,7 @@ func (s *APIServer) handle_get_file_meta(w http.ResponseWriter, r *http.Request)
 			return http.StatusBadRequest, err
 		}
 
-		meta, metaErr := Redis.get_file_meta(uuid)
+		meta, metaErr := Redis.get_file_meta_from_uuid(uuid)
 
 		if metaErr != nil {
 			return http.StatusNotFound, metaErr
@@ -243,7 +243,7 @@ func (s *APIServer) handle_download_file(w http.ResponseWriter, r *http.Request)
 			return
 		}
 
-		fileMeta, metaErr := Redis.get_file_meta(uuid)
+		fileMeta, metaErr := Redis.get_file_meta_from_uuid(uuid)
 
 		if metaErr != nil {
 			s.write_json(w, r, http.StatusBadRequest, EmptyResponse{Message: metaErr.Error()})
@@ -307,16 +307,17 @@ func (s *APIServer) handle_delete_file(w http.ResponseWriter, r *http.Request) (
 
 func (s *APIServer) check_file_expiry(meta *FileMeta) error {
 	if File.is_expired(meta) {
-		err := Redis.delete_file_meta(meta.UUID)
 
-		if err != nil {
-			return fmt.Errorf("this file has expired, error deleting meta")
-		}
-
-		err = AWS.delete_file(meta.UUID)
+		err := AWS.delete_file(meta.UUID)
 
 		if err != nil {
 			return fmt.Errorf("this file has expired, error deleting binary")
+		}
+
+		err = Redis.delete_file_meta(meta.UUID)
+
+		if err != nil {
+			return fmt.Errorf("this file has expired, error deleting meta")
 		}
 
 		return fmt.Errorf("this file has expired")

@@ -14,5 +14,8 @@ func main() {
 
 	AWS.init()
 
+	CRON.start()
+
 	API.serve()
+
 }

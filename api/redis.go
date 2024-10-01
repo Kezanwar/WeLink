@@ -18,13 +18,13 @@ const ONE_DAY = time.Hour * 24
 
 type RedisClient struct {
 	rdb         *redis.Client
-	bin_suffix  string
-	meta_suffix string
+	bin_prefix  string
+	meta_prefix string
 }
 
 var Redis = &RedisClient{
-	bin_suffix:  "__BINARY__",
-	meta_suffix: "__META__",
+	bin_prefix:  "__BINARY__",
+	meta_prefix: "__META__",
 }
 
 var RedisAddress = os.Getenv("REDIS_URL")
@@ -52,7 +52,7 @@ func (r *RedisClient) binary_to_binstring(bs []byte) string {
 }
 
 func (r *RedisClient) get_file_binary(uuid string) ([]byte, error) {
-	var key = uuid + r.bin_suffix
+	var key = r.bin_prefix + uuid
 	file, err := r.rdb.Get(ctx, key).Bytes()
 
 	if err == redis.Nil {
@@ -64,7 +64,7 @@ func (r *RedisClient) get_file_binary(uuid string) ([]byte, error) {
 
 func (r *RedisClient) set_file_binary(uuid string, file []byte) error {
 	var str_file = r.binary_to_binstring(file)
-	var key = uuid + r.bin_suffix
+	var key = r.bin_prefix + uuid
 
 	err := r.rdb.Set(ctx, key, str_file, ONE_DAY).Err()
 
@@ -76,7 +76,7 @@ func (r *RedisClient) set_file_binary(uuid string, file []byte) error {
 }
 
 func (r *RedisClient) delete_file_binary(uuid string) error {
-	var key = uuid + r.bin_suffix
+	var key = r.bin_prefix + uuid
 
 	err := r.rdb.Del(ctx, key).Err()
 
@@ -87,8 +87,29 @@ func (r *RedisClient) delete_file_binary(uuid string) error {
 	return nil
 }
 
-func (r *RedisClient) get_file_meta(uuid string) (*FileMeta, error) {
-	var key = uuid + r.meta_suffix
+func (r *RedisClient) get_file_meta_from_uuid(uuid string) (*FileMeta, error) {
+	var key = r.meta_prefix + uuid
+
+	meta_str, err := r.rdb.Get(ctx, key).Result()
+
+	if err == redis.Nil {
+		return nil, fmt.Errorf("meta not found")
+	} else if err != nil {
+		return nil, fmt.Errorf("meta search failed")
+	}
+
+	meta := &FileMeta{}
+
+	err = json.Unmarshal([]byte(meta_str), meta)
+
+	if err == redis.Nil {
+		return nil, fmt.Errorf("meta parsing failed")
+	}
+
+	return meta, nil
+}
+
+func (r *RedisClient) get_file_meta_from_key(key string) (*FileMeta, error) {
 
 	meta_str, err := r.rdb.Get(ctx, key).Result()
 
@@ -113,7 +134,7 @@ func (r *RedisClient) get_mlti_files_meta(uuids []string) ([]*FileMeta, error) {
 	var keys []string
 
 	for _, id := range uuids {
-		keys = append(keys, id+r.meta_suffix)
+		keys = append(keys, r.meta_prefix+id)
 	}
 
 	results, err := r.rdb.MGet(ctx, keys...).Result()
@@ -148,9 +169,9 @@ func (r *RedisClient) set_file_meta(uuid string, fileMeta *FileMeta) error {
 
 	meta_str := string(meta_json)
 
-	var key = uuid + r.meta_suffix
+	var key = r.meta_prefix + uuid
 
-	err = r.rdb.Set(ctx, key, meta_str, ONE_DAY).Err()
+	err = r.rdb.Set(ctx, key, meta_str, 0).Err()
 
 	if err != nil {
 		return err
@@ -160,7 +181,7 @@ func (r *RedisClient) set_file_meta(uuid string, fileMeta *FileMeta) error {
 }
 
 func (r *RedisClient) delete_file_meta(uuid string) error {
-	var key = uuid + r.meta_suffix
+	var key = r.meta_prefix + uuid
 
 	err := r.rdb.Del(ctx, key).Err()
 
@@ -185,4 +206,17 @@ func (r *RedisClient) delete_file(uuid string) error {
 	}
 
 	return nil
+}
+
+func (r *RedisClient) get_all_file_meta_keys() ([]string, error) {
+
+	var cursor uint64
+
+	keys, cursor, err := r.rdb.Scan(ctx, cursor, r.meta_prefix+"*", 0).Result()
+
+	if err != nil {
+		return nil, fmt.Errorf("error ")
+	}
+
+	return keys, nil
 }
