@@ -93,7 +93,7 @@ func (r *RedisClient) get_file_meta_from_uuid(uuid string) (*FileMeta, error) {
 	meta_str, err := r.rdb.Get(ctx, key).Result()
 
 	if err == redis.Nil {
-		return nil, fmt.Errorf("meta not found")
+		return nil, fmt.Errorf("file not found, it may have expired")
 	} else if err != nil {
 		return nil, fmt.Errorf("meta search failed")
 	}
