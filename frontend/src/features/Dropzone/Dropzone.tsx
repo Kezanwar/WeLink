@@ -87,7 +87,7 @@ const Dropzone: FC = () => {
       const res = await Request.postFile(file, (ev) => {
         if (ev.progress) {
           const val = ev.progress * 100;
-          if (val > 0 && val < 64) {
+          if (val > 0 && val < 74) {
             onUploadProgressChange(Math.round(val));
           } else {
             if (!interval.current) {

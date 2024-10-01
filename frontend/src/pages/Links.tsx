@@ -34,7 +34,6 @@ const Links: FC = () => {
         <div className="md:pt-8 md:pb-20">
           {!files.length && (
             <div className="flex items-center flex-col">
-              <p className=" text-sm">You haven't uploaded any files yet..</p>
               <PrimaryButton onClick={() => nav('/')} text="Upload a file" />
             </div>
           )}
