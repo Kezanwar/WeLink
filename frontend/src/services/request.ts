@@ -8,6 +8,14 @@ export type ErrorObject = {
   statusCode: number;
 };
 
+export class CustomError extends Error {
+  statusCode: number;
+  constructor(message: string, statusCode = 500) {
+    super(message);
+    this.statusCode = statusCode;
+  }
+}
+
 type APIErrorResp = {
   message: string;
 };
@@ -64,15 +72,11 @@ class Request {
     });
   }
 
-  static getFileBinary(uuid: string, onProgress: OnProgress) {
-    return this.axios.get<string>(`/file/download/${uuid}`, {
-      responseType: 'arraybuffer',
-      onDownloadProgress: onProgress
-    });
-  }
-
   static getFilesMeta(uuids: string[]) {
-    return this.axios.get('/files/meta', { params: { uuids } });
+    const params = uuids.map(
+      (id, i) => `uuid=${id}${i === uuids.length - 1 ? '' : '&'}`
+    );
+    return this.axios.get(`/files/meta?${params}`);
   }
 
   static getFileMeta(uuid: string) {

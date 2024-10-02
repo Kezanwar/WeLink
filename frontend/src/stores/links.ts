@@ -1,4 +1,5 @@
-import { isAfter } from 'date-fns';
+import isExpired from '@app/util/is-expired';
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
@@ -9,6 +10,7 @@ export type FileMeta = {
   name: string;
   type: string;
   expires: number;
+  download_link: string;
 };
 
 //links are saved fileMetas in LS
@@ -25,12 +27,11 @@ const useLinksStore = create<LinksStore>()(
   persist(
     (set, get) => ({
       files: [],
-      prune: () => {
+      prune: async () => {
         set((state) => {
           return {
             files: state.files.filter(
-              (fileMeta) =>
-                isAfter(new Date(fileMeta.expires * 1000), new Date()) // remove expired links
+              (fileMeta) => !isExpired(fileMeta.expires) // remove expired links
             )
           };
         });

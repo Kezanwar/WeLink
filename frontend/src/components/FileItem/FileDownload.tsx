@@ -15,9 +15,9 @@ import { toBase64 } from '@app/util/to-base-64';
 import { Buffer } from 'buffer';
 import getExt from '@app/util/get-ext';
 
-type Props = { meta: FileMeta };
+type Props = { meta: FileMeta; onDownload: () => void };
 
-const FileDownload: FC<Props> = ({ meta }) => {
+const FileDownload: FC<Props> = ({ meta, onDownload }) => {
   const { enqueueMessage } = useToastStore();
   const [_, copyToClipboard] = useCopyToClipboard();
 
@@ -32,36 +32,6 @@ const FileDownload: FC<Props> = ({ meta }) => {
       text: 'Link copied and ready to share 👍🏾',
       type: 'success'
     });
-  };
-
-  const onDownload = async () => {
-    try {
-      const res = await Request.getFileBinary(meta.uuid, (p) =>
-        console.log(p.progress)
-      );
-
-      console.log('runs');
-
-      const base64 = Buffer.from(res.data, 'binary').toString('base64');
-      //   console.log(typeof res.data);
-      //   const blob = atob(res.data)
-
-      //   //   if (typeof base64 !== 'string') {
-      //   //     throw new Error('failed to download');
-      //   //   }
-
-      //   // create "a" HTML element with href to file & click
-      const link = document.createElement('a');
-      link.href = `data:${res.headers['Content-Type']};base64,${base64}`;
-      link.setAttribute('download', meta.name); //or any other extension
-      document.body.appendChild(link);
-      link.click();
-
-      //   // clean up "a" element & remove ObjectURL
-      document.body.removeChild(link);
-    } catch (error) {
-      Request.errorHandler(error, (err) => console.log(error));
-    }
   };
 
   return (
@@ -98,8 +68,8 @@ const FileDownload: FC<Props> = ({ meta }) => {
             />
             <SecondaryButton
               onClick={onDownload}
-              className=" text-green-500 "
-              startIcon={<MdOutlineFileDownload size={20} />}
+              className=" text-red-400 "
+              startIcon={<MdOutlineFileDownload size={21} />}
               text="Download"
             />
           </div>
