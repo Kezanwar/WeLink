@@ -33,6 +33,7 @@ type FileMeta struct {
 	Size          int64  `json:"size"`
 	UUID          string `json:"uuid"`
 	Expires       int64  `json:"expires"`
+	DownloadLink  string `json:"download_link"`
 }
 
 var File = &FileService{}

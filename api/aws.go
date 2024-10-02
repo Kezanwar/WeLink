@@ -12,14 +12,16 @@ import (
 )
 
 type AWSService struct {
-	uploader   *s3manager.Uploader
-	downloader *s3manager.Downloader
-	deleter    *s3manager.BatchDelete
-	bucketName *string
+	uploader      *s3manager.Uploader
+	downloader    *s3manager.Downloader
+	deleter       *s3manager.BatchDelete
+	bucketName    *string
+	bucketBaseURL string
 }
 
 var AWS = &AWSService{
-	bucketName: aws.String(os.Getenv("BUCKET_NAME")),
+	bucketName:    aws.String(os.Getenv("BUCKET_NAME")),
+	bucketBaseURL: os.Getenv("BUCKET_BASE_URL"),
 }
 
 var aws_session = session.Must(session.NewSessionWithOptions(session.Options{Config: aws.Config{
@@ -32,6 +34,15 @@ func (a *AWSService) init() {
 	a.downloader = s3manager.NewDownloader(aws_session)
 	a.deleter = s3manager.NewBatchDelete(aws_session)
 
+}
+
+func (a *AWSService) make_key(meta *FileMeta) *string {
+	key := aws.String(meta.UUID + "/" + meta.Name)
+	return key
+}
+
+func (a *AWSService) make_download_link(uuid string, name string) string {
+	return a.bucketBaseURL + "/" + uuid + "/" + name
 }
 
 func (a *AWSService) get_file(key string) ([]byte, error) {
@@ -53,11 +64,11 @@ func (a *AWSService) get_file(key string) ([]byte, error) {
 	return f.Bytes(), nil
 }
 
-func (a *AWSService) store_file(key string, file multipart.File) error {
+func (a *AWSService) store_file(meta *FileMeta, file multipart.File) error {
 
 	upParams := &s3manager.UploadInput{
 		Bucket: a.bucketName,
-		Key:    aws.String(key),
+		Key:    a.make_key(meta),
 		Body:   file,
 	}
 
@@ -74,11 +85,11 @@ func (a *AWSService) store_file(key string, file multipart.File) error {
 	return nil
 }
 
-func (a *AWSService) delete_file(key string) error {
+func (a *AWSService) delete_file(meta *FileMeta) error {
 
 	del := &s3.DeleteObjectInput{
 		Bucket: a.bucketName,
-		Key:    aws.String(key),
+		Key:    a.make_key(meta),
 	}
 
 	_, err := a.deleter.Client.DeleteObject(del)

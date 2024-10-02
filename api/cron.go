@@ -43,7 +43,7 @@ func (c *CronService) expire_files() {
 
 		if meta.Expires <= time.Now().Unix() {
 
-			err := AWS.delete_file(meta.UUID)
+			err := AWS.delete_file(meta)
 
 			if err != nil {
 				color.Red("expire files cron: an error occured whilst deleting a file from AWS")

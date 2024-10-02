@@ -152,6 +152,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 			Size:          size,
 			UUID:          uuid,
 			Expires:       File.make_one_day_expiry_unix(),
+			DownloadLink:  AWS.make_download_link(uuid, name),
 		}
 
 		err = Redis.set_file_meta(uuid, meta)
@@ -160,7 +161,7 @@ func (s *APIServer) handle_upload_file(w http.ResponseWriter, r *http.Request) (
 			return http.StatusBadRequest, err
 		}
 
-		err = AWS.store_file(uuid, file)
+		err = AWS.store_file(meta, file)
 
 		if err != nil {
 			Redis.delete_file_meta(uuid)
@@ -287,13 +288,19 @@ func (s *APIServer) handle_delete_file(w http.ResponseWriter, r *http.Request) (
 			return http.StatusBadRequest, err
 		}
 
+		meta, err := Redis.get_file_meta_from_uuid(uuid)
+
+		if err != nil {
+			return http.StatusNotFound, err
+		}
+
 		err = Redis.delete_file_meta(uuid)
 
 		if err != nil {
 			return http.StatusNotFound, err
 		}
 
-		err = AWS.delete_file(uuid)
+		err = AWS.delete_file(meta)
 
 		if err != nil {
 			return http.StatusNotFound, err
@@ -308,7 +315,7 @@ func (s *APIServer) handle_delete_file(w http.ResponseWriter, r *http.Request) (
 func (s *APIServer) check_file_expiry(meta *FileMeta) error {
 	if File.is_expired(meta) {
 
-		err := AWS.delete_file(meta.UUID)
+		err := AWS.delete_file(meta)
 
 		if err != nil {
 			return fmt.Errorf("this file has expired, error deleting binary")
