@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Logo } from '@app/components/Logo';
-import { ThemeToggle } from '@app/components/Buttons/ThemeToggle';
+import ThemeToggle from '@app/components/Buttons/ThemeToggle';
 import LinksButton from '@app/components/Buttons/LinksButton';
 
 const Header: React.FC = (props) => {
