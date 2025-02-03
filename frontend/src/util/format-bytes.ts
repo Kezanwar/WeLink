@@ -1,13 +1,16 @@
 const units = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
-function formatBytes(x: number) {
-  let l = 0;
+function formatBytes(input: number) {
+  let index = 0;
 
-  while (x >= 1024 && ++l) {
-    x = x / 1024;
+  while (input >= 1024) {
+    input = input / 1024;
+    index++;
   }
 
-  return x.toFixed(x < 10 && l > 0 ? 1 : 0) + ' ' + units[l];
+  const precision = input < 10 && index > 0 ? 1 : 0;
+
+  return input.toFixed(precision) + ' ' + units[index];
 }
 
 export default formatBytes;
